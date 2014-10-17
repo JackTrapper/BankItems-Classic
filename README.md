@@ -1,12 +1,12 @@
 BankItems v60002
 ==============
 
-17th October 2014
+17th October 2014  
 For use with Live Servers v6.0.2.19034.
 
 An addon that remembers the contents of your bank, bags, mail, equipped, currency, AH, void storage and display them anywhere in the world. Also able to remember/display the banks of any character on the same account on any server, as well as searching and exporting lists of bag/bank items out.
 
-Type /bi or /bankitems to see what is currently in your bank. You must visit your bank once to initialize. Type /bigb or /bankitemsgb to see what is currently in your bank. You must visit your guildbank once to initialize.
+Type `/bi` or `/bankitems` to see what is currently in your bank. You must visit your bank once to initialize. Type /bigb or /bankitemsgb to see what is currently in your bank. You must visit your guildbank once to initialize.
 
 - /bi clear : clear currently selected player's info
 - /bigb clear : clear currently selected guild's info
@@ -119,73 +119,94 @@ Changes from v30300 to v40000 (13 October 2010)
 - For use with Live Servers v4.0.1.13164 or Cataclysm Beta Servers v4.0.3.13117.
 - UPDATED: All stored data for items are updated to the Cataclysm item format.
 - FIXED: Fix bug where ammo is not registering as unequipped when you unequip ammo.
-FIXED: Fix error that occurs for freshly created characters.
-UPDATED: Items with the same name but with different itemIDs (such as heroic and non-heroic versions of the same item) are now treated as different items in the tooltips.
-UPDATED: Upgrade all saved data to Cataclysm itemlinks.
-NEW: Add "/bi open charname" and "/bi charname" command to open the bank of desired character on the same server.
-TODO: Currency recording is temporarily disabled. The live servers, beta servers and PTR servers are too different.
+- FIXED: Fix error that occurs for freshly created characters.
+- UPDATED: Items with the same name but with different itemIDs (such as heroic and non-heroic versions of the same item) are now treated as different items in the tooltips.
+- UPDATED: Upgrade all saved data to Cataclysm itemlinks.
+- NEW: Add "/bi open charname" and "/bi charname" command to open the bank of desired character on the same server.
+- TODO: Currency recording is temporarily disabled. The live servers, beta servers and PTR servers are too different.
+
 Changes from v30200 to v30300 (24 December 2009)
+------------
 
-For use with Live Servers v3.3.0.11159.
-FIXED: Ammo will no longer count double when equipped.
-NEW: Add support for oGlow (github version - http://github.com/haste/oGlow, not the wowinterface one).
+- For use with Live Servers v3.3.0.11159.
+- FIXED: Ammo will no longer count double when equipped.
+- NEW: Add support for oGlow (github version - http://github.com/haste/oGlow, not the wowinterface one).
+
 Changes from v30100 to v30200 (16 August 2009)
+---------------
 
-For use with Live Servers v3.2.0.10192.
-NEW: Added a checkbox to toggle displaying data from the opposite faction (affects both dropdowns and tooltips).
-UPDATED: Items on the Auction House are now shown in the tooltip information. Note that this information can be inaccurate if these items are sold or expired.
+- For use with Live Servers v3.2.0.10192.
+- NEW: Added a checkbox to toggle displaying data from the opposite faction (affects both dropdowns and tooltips).
+- UPDATED: Items on the Auction House are now shown in the tooltip information. Note that this information can be inaccurate if these items are sold or expired.
+
 Changes from v30002 to v30100 (9th June 2009)
+--------------
 
-FIXED: Fix rare "selfPlayer (nil value)" error.
-UPDATED: Remove all pre-Wrath compatibility code.
-UPDATED: Export now exports equipped gear as well.
-UPDATED: BankItems now uses the WoWAce localization system at http://www.wowace.com/projects/bank-items/localization/
-UPDATED: Update BankItems tooltip information to work with LinkWrangler's dynamic frame creation.
-UPDATED: Linking items from BankItems should now behave like the default UI (including being able to link into the AH search box).
-UPDATED: Significantly reduce string garbage generation. Also some code optimizations.
-UPDATED: When taking items from the mailbox, the tooltip information is now updated immediately.
-UPDATED: Add esES localization.
-NEW: Currency tokens are now recorded.
-NEW: The contents of the Keyring are now recorded.
-NEW: Items you have put up for auction are now recorded when you visit the Auction House. These items are not included in searches or tooltips.
-NEW: Register a LDB launcher if LDB-1.1 is detected during VARIABLES_LOADED.
-NEW: BankItems will now only show/search characters and guilds from the same faction and realm. You will need to login at least once per character/guild for BankItems to save faction information otherwise these characters will no longer show up unless the "Show/Search All Realms" checkbox is checked.
+- FIXED: Fix rare "selfPlayer (nil value)" error.
+- UPDATED: Remove all pre-Wrath compatibility code.
+- UPDATED: Export now exports equipped gear as well.
+- UPDATED: BankItems now uses the WoWAce localization system at http://www.wowace.com/projects/bank-items/localization/
+- UPDATED: Update BankItems tooltip information to work with LinkWrangler's dynamic frame creation.
+- UPDATED: Linking items from BankItems should now behave like the default UI (including being able to link into the AH search box).
+- UPDATED: Significantly reduce string garbage generation. Also some code optimizations.
+- UPDATED: When taking items from the mailbox, the tooltip information is now updated immediately.
+- UPDATED: Add esES localization.
+- NEW: Currency tokens are now recorded.
+- NEW: The contents of the Keyring are now recorded.
+- NEW: Items you have put up for auction are now recorded when you visit the Auction House. These items are not included in searches or tooltips.
+- NEW: Register a LDB launcher if LDB-1.1 is detected during VARIABLES_LOADED.
+- NEW: BankItems will now only show/search characters and guilds from the same faction and realm. You will need to login at least once per character/guild for BankItems to save faction information otherwise these characters will no longer show up unless the "Show/Search All Realms" checkbox is checked.
+
 Changes from v30001 to v30002 (24th October 2008)
+-------------
 
-FIXED: Fix errors that occur when used with HealPoints.
-FIXED: Fix errors that occur when clearing data of a player/guildbank.
-REMOVED: Removed support for Saeris' Lootlink, which is discontinued and no longer works in patch 3.0.2.
+- FIXED: Fix errors that occur when used with HealPoints.
+- FIXED: Fix errors that occur when clearing data of a player/guildbank.
+- REMOVED: Removed support for Saeris' Lootlink, which is discontinued and no longer works in patch 3.0.2.
+
 Changes from v30000 to v30001 (15th October 2008)
+-------------
 
-For use with Live Servers v3.0.2.9056 or WotLK Beta Servers v3.0.2.9061.
-FIXED: Fix errors that appear when opening the Addon options frame.
+- For use with Live Servers v3.0.2.9056 or WotLK Beta Servers v3.0.2.9061.
+- FIXED: Fix errors that appear when opening the Addon options frame.
+
 Changes from v24001 to v30000 (14th October 2008)
+------------
 
-For use with Live Servers v3.0.2.9056 or WotLK Beta Servers v3.0.2.9061.
-FIXED: Fix errors resulting from the base UI code being rewritten to use locals and "self" arguments in WotLK.
-UPDATED: Delay creation of some 600+ child frames and textures (mostly item buttons) until they are shown (saves 50kb). Experimental. May screw up Skinner.
-UPDATED: Add upgrade function to convert old TBC format links to new WotLK format links.
+- For use with Live Servers v3.0.2.9056 or WotLK Beta Servers v3.0.2.9061.
+- FIXED: Fix errors resulting from the base UI code being rewritten to use locals and "self" arguments in WotLK.
+- UPDATED: Delay creation of some 600+ child frames and textures (mostly item buttons) until they are shown (saves 50kb). Experimental. May screw up Skinner.
+- UPDATED: Add upgrade function to convert old TBC format links to new WotLK format links.
+
 Changes from v24000 to v24001 (16th May 2008)
+------------
 
-For use with Live Servers v2.4.2.8278.
-CODING: Removed redundant semicolons and brackets.
-FIXED: Fix deleted/returned flags that mark if a mail item is going to be deleted or returned when it expires. Existing incorrect flags remain incorrect until you next visit the mailbox.
-UPDATED: BankItems no longer stores iconpath data or itemcount data if it is 1. This results in roughly 30% reduction in savedvariable size.
+- For use with Live Servers v2.4.2.8278.
+- CODING: Removed redundant semicolons and brackets.
+- FIXED: Fix deleted/returned flags that mark if a mail item is going to be deleted or returned when it expires. Existing incorrect flags remain incorrect until you next visit the mailbox.
+- UPDATED: BankItems no longer stores iconpath data or itemcount data if it is 1. This results in roughly 30% reduction in savedvariable size.
+
 Changes from v23003 to v24000 (27th March 2008)
+---------------
 
-For use with Live Servers v2.4.0.8089.
-ADDED: Store mail expiry time for each item in the mailbox.
-ADDED: New option to ignore soulbound items that are not stackable for tooltip information.
-UPDATED: Moved the options window into the default UI's new Interace Options panel.
+- For use with Live Servers v2.4.0.8089.
+- ADDED: Store mail expiry time for each item in the mailbox.
+- ADDED: New option to ignore soulbound items that are not stackable for tooltip information.
+- UPDATED: Moved the options window into the default UI's new Interace Options panel.
+
 Changes from v23002 to v23003 (9th January 2008)
+---------------------
 
-For use with Live Servers v2.3.2.7741.
-FIXED: Fix for BankItems.lua: 3894: attempt to call global 'GetUIPanelWindowInfo' (a nil value)
+- For use with Live Servers v2.3.2.7741.
+- FIXED: Fix for BankItems.lua: 3894: attempt to call global 'GetUIPanelWindowInfo' (a nil value)
+
 Changes from v23001 to v23002 (2nd January 2008)
+--------------------
 
-FIXED: Add a tooltip:Show() to force tooltip repainting after adding tooltip information.
-FIXED: *Very* aggressively cache tooltip text that is added for performance (slight memory increase).
-FIXED: Switched method of hooking tooltips to improve performance (credit to Siz).
-FIXED: Rebuild alt-cache on returning items to an existing alt.
-ADDED: Added a button to open BIGB in BankItems.
+- FIXED: Add a tooltip:Show() to force tooltip repainting after adding tooltip information.
+- FIXED: *Very* aggressively cache tooltip text that is added for performance (slight memory increase).
+- FIXED: Switched method of hooking tooltips to improve performance (credit to Siz).
+- FIXED: Rebuild alt-cache on returning items to an existing alt.
+- ADDED: Added a button to open BIGB in BankItems.
+
 For older changes going all the way back to 2006, read the first part of BankItems.lua.
