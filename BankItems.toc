@@ -1,5 +1,5 @@
 ﻿## Interface: 60000
-## Title: BankItems v60200
+## Title: BankItems
 ## Title-zhCN: 离线银行 BankItems
 ## Title-zhTW: 離線銀行 BankItems
 ## Version: 60200

@@ -3,6 +3,9 @@
 	17th October 2014
 
 	Author: Xinhuan @ US Frostmourne Alliance
+	Fixed for 6.0.2: JackTripper @ curse.com
+			 shadowtreedruid @ curse.com					
+			 Mornadan @ EU Ravenholdt Alliance, curse.com			 
 	*****************************************************************
 	Description:
 		Type /bi or /bankitems to see what is currently in your
@@ -358,8 +361,8 @@ local mailPage           = 1      -- integer, current page of bag 101
 local AHPage             = 1      -- integer, current page of bag 103
 local voidPage           = 1      -- integer, current page of bag 104
 local voidPageSize       = 18     -- integer, size of pages for bag 104
-local reagentBankPage    = 1      -- integer, current page of bag 105 (Reagent Bank)
-local reagentBankPageSize= 12     -- integer, size of pages for bag 105 (Reagent Bank)  
+local reagentBankPage    = 1      -- integer, current page of bag 105 (Reagent Bank) --by JackTripper
+local reagentBankPageSize= 12     -- integer, size of pages for bag 105 (Reagent Bank)  -- by JackTripper
 local BankItems_Quantity = 1      -- integer, used for hooking EnhTooltip data
 local bagsToUpdate       = {}     -- table, stores data about bags to update on next OnUpdate
 local mailItem           = {}     -- table, stores data about the item to be mailed
@@ -568,8 +571,8 @@ function BankItems_Bag_OnEnter(self)
 		GameTooltip:SetText(AUCTIONS)
 	elseif id == 104 then
 		GameTooltip:SetText(VOID_STORAGE)
-	elseif id == 105 then
-		GameTooltip:SetText(REAGENT_BANK)
+	elseif id == 105 then				--by JackTripper
+		GameTooltip:SetText(REAGENT_BANK)	--by JackTripper
 	elseif bankPlayer[format("Bag%d", id)] then
 		GameTooltip:SetHyperlink(bankPlayer[format("Bag%d", id)].link)
 		BankItems_AddEnhTooltip(bankPlayer[format("Bag%d", id)].link, 1)
@@ -596,8 +599,8 @@ function BankItems_Bag_OnClick(self, button)
 			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(AUCTIONS))
 		elseif bagID == 104 then
 			BankItems_Chat(L["Void Storage data not found. Please visit the Void Storage NPC on this character once to record it."])
-		elseif bagID == 105 then
-			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(REAGENT_BANK));
+		elseif bagID == 105 then	--by JackTripper
+			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(REAGENT_BANK))
 		end
 		return
 	end
@@ -791,8 +794,8 @@ function BankItems_Bag_OnClick(self, button)
 		_G[name.."Name"]:SetText(AUCTIONS)
 	elseif (bagID == 104) then
 		_G[name.."Name"]:SetText(VOID_STORAGE)
-	elseif (bagID == 105) then
-		_G[name.."Name"]:SetText(REAGENT_BANK)
+	elseif (bagID == 105) then				--by JackTripper
+		_G[name.."Name"]:SetText(REAGENT_BANK)		--by JackTripper
 	else
 		_G[name.."Name"]:SetText(BankItems_ParseLink(theBag.link))
 	end
@@ -844,8 +847,8 @@ function BankItems_BagItem_OnEnter(self)
 		itemID = itemID + (AHPage - 1) * 18
 	elseif bagID == 104 then
 		itemID = itemID + (voidPage - 1) * voidPageSize
-	elseif bagID == 105 then
-		itemID = itemID + (reagentBankPage - 1) * reagentBankPageSize
+	elseif bagID == 105 then						--by JackTripper
+		itemID = itemID + (reagentBankPage - 1) * reagentBankPageSize	--by JackTripper
 	end
 	local item = bankPlayer[format("Bag%d", bagID)][itemID]
 	if item then
@@ -905,8 +908,8 @@ function BankItems_BagItem_OnClick(self, button)
 		itemID = itemID + (AHPage - 1) * 18
 	elseif bagID == 104 then
 		itemID = itemID + (voidPage - 1) * voidPageSize
-	elseif bagID == 105 then
-		itemID = itemID + (reagentBankPage - 1) * reagentBankPageSize
+	elseif bagID == 105 then						--by JackTripper
+		itemID = itemID + (reagentBankPage - 1) * reagentBankPageSize	--by JackTripper
 	end
 	local item = bankPlayer[format("Bag%d", bagID)][itemID]
 	if item then
@@ -939,7 +942,7 @@ function BankItems_BagPortrait_OnEnter(self)
 		GameTooltip:SetText(AUCTIONS)
 	elseif bagNum == 104 then
 		GameTooltip:SetText(VOID_STORAGE)
-	elseif bagNum == 105 then
+	elseif bagNum == 105 then	--by JackTripper
 		GameTooltip:SetText(REAGENT_BANK)
 	elseif bankPlayer[format("Bag%d", bagNum)].link then
 		GameTooltip:SetHyperlink(bankPlayer[format("Bag%d", bagNum)].link)
@@ -1423,11 +1426,11 @@ function BankItems_CreateFrames()
 	BagButtonAr[102]:SetScale(0.5)
 	BagButtonAr[103]:SetScale(0.5)
 	BagButtonAr[104]:SetScale(0.5)
-	--TODO: Place Reagent Bank somewhere
+	BagButtonAr[105]:SetScale(0.5)		-- by Mornadan
 	BagButtonAr[102]:SetPoint("TOPRIGHT", BagButtonAr[100], "TOPLEFT", 0, 0)
 	BagButtonAr[103]:SetPoint("TOPLEFT", BagButtonAr[100], "BOTTOMLEFT", 0, 0)
 	BagButtonAr[104]:SetPoint("TOPLEFT", BagButtonAr[102], "BOTTOMLEFT", 0, 0)
-	--TODO: Place Reagent Bank somewhere
+	BagButtonAr[105]:SetPoint("TOPRIGHT", BagButtonAr[102], "TOPLEFT", 0, 0)	-- by Mornadan
 
 	-- Create the Money frame
 	BankItems_MoneyFrame = CreateFrame("Frame", "BankItems_MoneyFrame", BankItems_Frame, "SmallMoneyFrameTemplate")
@@ -2709,7 +2712,7 @@ function BankItems_SaveItems()
 		--ITEM_INVENTORY_BANK_BAG_OFFSET+1 = 5
 		--ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS = 11
 		for bagNum = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
-			local bagNum_ID = BankButtonIDToInvSlotID(bagNum, 1)
+			local bagNum_ID = BankButtonIDToInvSlotID(bagNum, 1)-4		-- BankButtonIDToInvSlotID returns wrong slot IDs for bank bags, -4 to get shifted proper IDs, fix by Mornadan
 			local itemLink = GetInventoryItemLink("player", bagNum_ID)
 			if itemLink then
 				selfPlayer[format("Bag%d", bagNum)] = selfPlayer[format("Bag%d", bagNum)] or newTable()
@@ -2735,7 +2738,7 @@ function BankItems_SaveItems()
 		end
 	end;
 	
-	BankItems_SaveReagentBank();
+	BankItems_SaveReagentBank()		--by JackTripper
 	
 	if BankItems_Frame:IsVisible() and bankPlayer == selfPlayer then
 		BankItems_PopulateFrame()
@@ -2936,16 +2939,16 @@ function BankItems_SaveVoidStorage()
 	local itemPointer
 	local j = 0
 	local i
-	local k; --k-th void storage tab
+	local k --k-th void storage tab	--by JackTripper
 
 	-- Save void storage items as bag 104
 	selfPlayer.Bag104 = selfPlayer.Bag104 or newTable();
 	
-	local iconVoidStorage1 = "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater";
-	local iconVoidStorage2 = "Interface\\Icons\\INV_Enchant_EssenceArcaneLarge";
-	selfPlayer.Bag104.icon = iconVoidStorage1; --"Interface\\Icons\\spell_nature_astralrecal"
+	local iconVoidStorageTab1 = "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater";
+	local iconVoidStorageTab2 = "Interface\\Icons\\INV_Enchant_EssenceArcaneLarge";
+	selfPlayer.Bag104.icon = iconVoidStorageTab1; --"Interface\\Icons\\spell_nature_astralrecal"
 
-	--for each void storage tab
+	--for each void storage tab --fix by shadowtreedruid
 	for k = 1, 2 do
 		for i = 1, 80 do
 			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(k, i)
@@ -2972,7 +2975,7 @@ function BankItems_SaveVoidStorage()
 	end
 end
 
-function BankItems_SaveReagentBank()
+function BankItems_SaveReagentBank()		-- function by JackTripper
 	if not isBankOpen then
 		return;
 	end;
@@ -2983,7 +2986,7 @@ function BankItems_SaveReagentBank()
 
 	-- Save Reagent Bank window as bag 105
 	selfPlayer.Bag105 = selfPlayer.Bag105 or newTable();
-	selfPlayer.Bag105.icon = iconVoidStorage1; --"Interface\\Icons\\INV_Misc_Bag_07_Black";
+	selfPlayer.Bag105.icon = "Interface\\Icons\\INV_Enchant_EssenceArcaneLarge" -- set icon by Mornadan
 
 	local j = 0;
 	local itemPointer;
@@ -2995,6 +2998,7 @@ function BankItems_SaveReagentBank()
 			--print(link);
 			selfPlayer.Bag105[j] = selfPlayer.Bag105[j] or newTable()
 			itemPointer = selfPlayer.Bag105[j]
+			itemPointer.count = count and count > 1 and count or nil 	-- fix to proper item count in reagent bank by Mornadan
 			itemPointer.link = link
 			itemPointer.icon = texture
 		end;
@@ -3160,6 +3164,10 @@ function BankItems_PopulateFrame()
 	BagButtonAr[103].texture:SetTexture("Interface\\Icons\\INV_Hammer_15")
 	BagButtonAr[103].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[103]:Show()
+	-- Reagent Bag  icon by Mornadan
+	BagButtonAr[105].texture:SetTexture("Interface\\Icons\\INV_Enchant_EssenceArcaneLarge")
+	BagButtonAr[105].texture:SetVertexColor(1, 1, 1)
+	BagButtonAr[105]:Show()
 	-- Money
 	BankItems_UpdateMoney()
 	-- Location
@@ -3554,7 +3562,7 @@ function BankItems_GenerateExportText()
 			if bagNum ~= 103 and theBag then
 			--if theBag then
 				local realSize = theBag.size
-				if bagNum == 101 or bagNum == 104 or (bagNum == 105) then
+				if bagNum == 101 or bagNum == 104 or (bagNum == 105) then	-- by JackTripper
 					realSize = #theBag
 				end
 				for bagItem = 1, realSize do
@@ -3607,7 +3615,7 @@ function BankItems_GenerateExportText()
 			if bagNum ~= 103 and theBag then
 			--if theBag then
 				local realSize = theBag.size
-				if bagNum == 101 or bagNum == 104 or (bagNum == 105) then
+				if bagNum == 101 or bagNum == 104 or (bagNum == 105) then	-- by JackTripper
 					realSize = #theBag
 				end
 				for bagItem = 1, realSize do
@@ -3621,8 +3629,8 @@ function BankItems_GenerateExportText()
 								prefix = CURRENCY..": "
 							elseif bagNum == 104 then
 								prefix = VOID_STORAGE..": "
-							elseif bagNum == 105 then
-								prefix = REAGENT_BANK..": "
+							elseif bagNum == 105 then		-- by JackTripper
+								prefix = REAGENT_BANK..": "	-- by JackTripper
 							else
 								prefix = format(L["Bag %d Item %d:"], bagNum, bagItem).." "
 							end
@@ -3664,7 +3672,7 @@ function BankItems_Search(searchText)
 	searchFilter[101] = BankItems_Save.Behavior2[4]
 	searchFilter[102] = BankItems_Save.Behavior2[2]
 	searchFilter[104] = BankItems_Save.Behavior2[1] -- consider void storage a bank bag for filtering purposes
-	searchFilter[105] = BankItems_Save.Behavior2[1] -- consider Reagent Bank a bank bag for filtering purposes
+	searchFilter[105] = BankItems_Save.Behavior2[1] -- consider Reagent Bank a bank bag for filtering purposes -- by JackTripper
 
 	if BankItems_Save.GroupExportData then
 		-- Group similar items together in the report
@@ -3689,7 +3697,7 @@ function BankItems_Search(searchText)
 					local theBag = bankPlayer[format("Bag%d", bagNum)]
 					if searchFilter[bagNum] and theBag then
 						local realSize = theBag.size
-						if bagNum == 101 or bagNum == 104 or (bagNum == 105) then
+						if bagNum == 101 or bagNum == 104 or (bagNum == 105) then	-- by JackTripper
 							realSize = #theBag
 						end
 						for bagItem = 1, realSize do
@@ -3709,7 +3717,7 @@ function BankItems_Search(searchText)
 										data[temp][key].mail = (data[temp][key].mail or 0) + (theBag[bagItem].count or 1)
 									elseif bagNum == 104 then
 										data[temp][key].voidstorage = (data[temp][key].voidstorage or 0) + (theBag[bagItem].count or 1)
-									elseif bagNum == 105 then
+									elseif bagNum == 105 then	-- by JackTripper
 										data[temp][key].reagentbank = (data[temp][key].reagentbank or 0) + (theBag[bagItem].count or 1)
 									else
 										data[temp][key].bank = (data[temp][key].bank or 0) + (theBag[bagItem].count or 1)
@@ -3755,7 +3763,7 @@ function BankItems_Search(searchText)
 			{ GUILD_BANK },
 			{ CURRENCY },
 			{ VOID_STORAGE },
-			{ REAGENT_BANK }
+			{ REAGENT_BANK }		-- by JackTripper
 		}
 		-- Generate the report
 		for itemName, whotable in pairs(data) do
@@ -3778,7 +3786,7 @@ function BankItems_Search(searchText)
 				baginfos[5][2] = counttable.gbank
 				baginfos[6][2] = counttable.currency
 				baginfos[7][2] = counttable.voidstorage
-				baginfos[8][2] = counttable.reagentbank
+				baginfos[8][2] = counttable.reagentbank		-- by JackTripper
 				local text = format("     %d %s (", counttable.count, name);
 				local first = true
 				for i = 1, #baginfos do
@@ -3827,7 +3835,7 @@ function BankItems_Search(searchText)
 					local theBag = bankPlayer[format("Bag%d", bagNum)]
 					if searchFilter[bagNum] and theBag then
 						local realSize = theBag.size
-						if bagNum == 101 or bagNum == 104 or (bagNum == 105) then
+						if bagNum == 101 or bagNum == 104 or (bagNum == 105) then	-- by JackTripper
 							realSize = #theBag
 						end
 						for bagItem = 1, realSize do
@@ -3841,7 +3849,7 @@ function BankItems_Search(searchText)
 										prefix = "     "..CURRENCY..": "
 									elseif bagNum == 104 then
 										prefix = "     "..VOID_STORAGE..": "
-									elseif bagNum == 105 then
+									elseif bagNum == 105 then	-- by JackTripper
 										prefix = "     "..REAGENT_BANK..": "
 									else
 										prefix = "     "..L["Bag %d Item %d:"]:format(bagNum, bagItem).." "
@@ -4047,7 +4055,7 @@ function BankItems_Generate_ItemCache()
 				local theBag = bankPlayer[format("Bag%d", bagNum)]
 				if theBag then
 					local realSize = theBag.size
-					if bagNum == 101 or bagNum == 103 or bagNum == 104 or (bagNum == 105) then
+					if bagNum == 101 or bagNum == 103 or bagNum == 104 or (bagNum == 105) then	-- by JackTripper
 						realSize = #theBag
 					end
 					for bagItem = 1, realSize do
@@ -4074,7 +4082,7 @@ function BankItems_Generate_ItemCache()
 									data[temp][key].auction = (data[temp][key].auction or 0) + (theBag[bagItem].count or 1)
 								elseif bagNum == 104 then
 									data[temp][key].voidstorage = (data[temp][key].voidstorage or 0) + (theBag[bagItem].count or 1)
-								elseif bagNum == 105 then
+								elseif bagNum == 105 then	-- by JackTripper
 									data[temp][key].reagentbank = (data[temp][key].reagentbank or 0) + (theBag[bagItem].count or 1)
 								else
 									data[temp][key].bank = (data[temp][key].bank or 0) + (theBag[bagItem].count or 1)
@@ -4114,7 +4122,7 @@ function BankItems_Generate_SelfItemCache()
 		local theBag = bankPlayer[format("Bag%d", bagNum)]
 		if theBag then
 			local realSize = theBag.size
-			if bagNum == 101 or bagNum == 103 or (bagNum == 105) then
+			if bagNum == 101 or bagNum == 103 or (bagNum == 105) then	-- by JackTripper
 				realSize = #theBag
 			end
 			
@@ -4212,8 +4220,11 @@ function BankItems_AddTooltipData(self, ...)
 		if BankItems_Save.TTSoulbound then
 			local secondLine = _G[self:GetName().."TextLeft2"]:GetText()
 			local thirdLine = _G[self:GetName().."TextLeft3"]:GetText()
+			local fourthLine = _G[self:GetName().."TextLeft4"]:GetText()	-- fix for unstackable soulbound items by Mornadan
+			local fifthLine = _G[self:GetName().."TextLeft5"]:GetText()	-- fix for unstackable soulbound items by Mornadan
+			local sixthLine = _G[self:GetName().."TextLeft6"]:GetText()	-- fix for unstackable soulbound items by Mornadan
 			local itemStack = select(8, GetItemInfo(item))
-			if itemStack == 1 and (ignoreTooltipsTypes[secondLine] or ignoreTooltipsTypes[thirdLine]) then
+			if itemStack == 1 and (ignoreTooltipsTypes[secondLine] or ignoreTooltipsTypes[thirdLine] or ignoreTooltipsTypes[fourthLine] or ignoreTooltipsTypes[fifthLine] or ignoreTooltipsTypes[sixthLine]) then	-- fix for unstackable soulbound items by Mornadan
 				self.BankItemsDone = true
 				return
 			end
@@ -4227,7 +4238,7 @@ function BankItems_AddTooltipData(self, ...)
 			{ AUCTIONS },
 			{ CURRENCY },
 			{ VOID_STORAGE },
-			{ REAGENT_BANK }
+			{ REAGENT_BANK }	-- by JackTripper
 		}
 		local totalCount = 0
 		local characters = 0
@@ -4243,7 +4254,7 @@ function BankItems_AddTooltipData(self, ...)
 			baginfos[5][2] = counttable.auction
 			baginfos[6][2] = counttable.currency
 			baginfos[7][2] = counttable.voidstorage
-			baginfos[8][2] = counttable.reagentbank
+			baginfos[8][2] = counttable.reagentbank		-- by JackTripper
 			text = format("%s %s %d [", strsplit("|", selfPlayerName), L["has"], counttable.count);
 			local first = true
 			for i = 1, #baginfos do
@@ -4269,7 +4280,7 @@ function BankItems_AddTooltipData(self, ...)
 				baginfos[5][2] = counttable.auction
 				baginfos[6][2] = counttable.currency
 				baginfos[7][2] = counttable.voidstorage
-				baginfos[8][2] = counttable.reagentbank
+				baginfos[8][2] = counttable.reagentbank		-- by JackTripper
 				text = format("%s %s %d [", strsplit("|", who), L["has"], counttable.count);
 				local first = true
 				for i = 1, #baginfos do
@@ -5476,7 +5487,7 @@ if oGlow and oGlow.RegisterPipe then
 							idx = idx + (AHPage - 1) * 18
 						elseif (bagID == 104) then  -- Adjust for page number
 							idx = idx + (voidPage - 1) * voidPageSize
-						elseif (bagID == 105) then  -- Adjust for page number
+						elseif (bagID == 105) then  -- Adjust for page number -- by JackTripper
 							idx = idx + (reagentBankPage - 1) * reagentBankPageSize
 						end
 						if theBag[idx] then
