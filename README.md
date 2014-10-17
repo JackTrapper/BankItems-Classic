@@ -6,14 +6,14 @@ For use with Live Servers v6.0.2.19034.
 
 An addon that remembers the contents of your bank, bags, mail, equipped, currency, AH, void storage and display them anywhere in the world. Also able to remember/display the banks of any character on the same account on any server, as well as searching and exporting lists of bag/bank items out.
 
-Type `/bi` or `/bankitems` to see what is currently in your bank. You must visit your bank once to initialize. Type /bigb or /bankitemsgb to see what is currently in your bank. You must visit your guildbank once to initialize.
+Type `/bi` or `/bankitems` to see what is currently in your bank. You must visit your bank once to initialize. Type `/bigb` or `/bankitemsgb` to see what is currently in your bank. You must visit your guild bank once to initialize.
 
-- /bi clear : clear currently selected player's info
-- /bigb clear : clear currently selected guild's info
+- `/bi clear` : clear currently selected player's info
+- `/bigb clear` : clear currently selected guild's info
 
 Read below for other commands.
 
-BankItems will also remember the contents of Guild Banks if you are able to view them. Use /bigb to see them. Note that Guild Banks are a shared repository and changes can occur to it by other members of your guild.
+BankItems will also remember the contents of Guild Banks if you are able to view them. Use `/bigb` to see them. Note that Guild Banks are a shared repository and changes can occur to it by other members of your guild.
 
 FuBar plugin for BankItems
 --------------
@@ -27,7 +27,7 @@ Titan Panel plugin for BankItems
 
 http://wowui.incgamers.com/?p=mod&m=3848
 
-Note: I no longer support the Titan Panel plugin and its current author is not me.
+**Note:** I no longer support the Titan Panel plugin and its current author is not me.
 
 LDB plugin for BankItems
 -------------------
@@ -37,33 +37,33 @@ BankItems provides a LDB launcher if LibDataBroker-1.1 is detected to be loaded.
 Commands
 -----------
 
-- /bi : open BankItems
-- /bi all : open BankItems and all bags
-- /bi allbank: open BankItems and all bank bags only
-- /bi clear : clear currently selected player's info
-- /bi clearall : clear all players' info
-- /bi showbuttun : show the minimap button
-- /bi hidebutton : hide the minimap button
-- /bi open charname : open bank of charname on the same server
-- /bi charname : open bank of charname on the same server
-- /bi search itemname : search for items
-- /bis itemname : search for items
-- /bigb : open BankItems guild bank
-- /bigb clear : clear currently selected guild's info
+- `/bi` : open BankItems
+- `/bi all` : open BankItems and all bags
+- `/bi allbank`: open BankItems and all bank bags only
+- `/bi clear` : clear currently selected player's info
+- `/bi clearall` : clear all players' info
+- `/bi showbutton` : show the minimap button
+- `/bi hidebutton` : hide the minimap button
+- `/bi open charname` : open bank of charname on the same server
+- `/bi charname` : open bank of charname on the same server
+- `/bi search itemname` : search for items
+- `/bis itemname` : search for items
+- `/bigb` : open BankItems guild bank
+- `/bigb clear` : clear currently selected guild's info
 
 Most options are found in the GUI options panel.
 
 Not a bug
 ----------
 
-If you close your bank after retrieving/storing an item in it too quickly and the server hasn't updated your inventory, BankItems is unable to record the change to your bank when the item actually moves later. The WoW API does not give you any data about your bank once BANK_FRAME_CLOSED event has fired.
+If you close your bank after retrieving/storing an item in it too quickly and the server hasn't updated your inventory, BankItems is unable to record the change to your bank when the item actually moves later. The WoW API does not give you any data about your bank once **BANK_FRAME_CLOSED** event has fired.
 
 Tooltip information regarding items on the Auction House, Mailbox and Guild Bank(s) may be out of date and thus be inaccurate. They will only be updated on your next visit to the respective places.
 
 Credits
 ---------
 
-Original concept from Merphle
+Original concept from Merphle  
 Last maintained by JASlaughter, then Galmok@Stormrage-EU.
 
 Change Log
