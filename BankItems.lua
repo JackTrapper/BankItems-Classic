@@ -2912,20 +2912,24 @@ function BankItems_SaveVoidStorage()
 	local itemPointer
 	local j = 0
 	local i
+	local k; --k-th void storage tab
 
 	-- Save void storage items as bag 104
 	selfPlayer.Bag104 = selfPlayer.Bag104 or newTable()
 	selfPlayer.Bag104.icon = "Interface\\Icons\\spell_nature_astralrecal"
 
-	for i = 1, 80 do
-		itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
-		if itemID and textureName and textureName ~= "" then
-			j = j + 1
-			selfPlayer.Bag104[j] = selfPlayer.Bag104[j] or newTable()
-			local _, link = GetItemInfo(itemID)
-			itemPointer = selfPlayer.Bag104[j]
-			itemPointer.link = link
-			itemPointer.icon = textureName
+	--for each void storage tab
+	for k = 1, 2 do
+		for i = 1, 80 do
+			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(k, i)
+			if itemID and textureName and textureName ~= "" then
+				j = j + 1
+				selfPlayer.Bag104[j] = selfPlayer.Bag104[j] or newTable()
+				local _, link = GetItemInfo(itemID)
+				itemPointer = selfPlayer.Bag104[j]
+				itemPointer.link = link
+				itemPointer.icon = textureName
+			end
 		end
 	end
 	-- j is last item
