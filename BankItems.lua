@@ -1,5 +1,5 @@
 ﻿--[[*****************************************************************
-	BankItems v60000
+	BankItems v60200
 	17th October 2014
 
 	Author: Xinhuan @ US Frostmourne Alliance
