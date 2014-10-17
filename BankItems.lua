@@ -2992,7 +2992,7 @@ function BankItems_SaveReagentBank()
 		local texture, count, locked, quality, readable, lootable, link = GetContainerItemInfo(REAGENTBANK_CONTAINER, slot)
 		if link then
 			j = j + 1
-			print(link);
+			--print(link);
 			selfPlayer.Bag105[j] = selfPlayer.Bag105[j] or newTable()
 			itemPointer = selfPlayer.Bag105[j]
 			itemPointer.link = link
@@ -4118,8 +4118,8 @@ function BankItems_Generate_SelfItemCache()
 				realSize = #theBag
 			end
 			
-			print("Generating cache for: "..format("Bag%d", bagNum));
-			print("bag size: "..format("%d", realSize or 0));
+			--print("Generating cache for: "..format("Bag%d", bagNum));
+			--print("bag size: "..format("%d", realSize or 0));
 			for bagItem = 1, realSize do
 				if theBag[bagItem] and type(theBag[bagItem].link) == "string" then
 					--temp = strmatch(theBag[bagItem].link, "%[(.*)%]")
