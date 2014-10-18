@@ -96,7 +96,7 @@ L["Transparency %d%%"] = "투명도 %d%%"
 L["Type /bi or /bankitems to open BankItems"] = "BankItems 열기는 /bi 혹은 /bankitems를 입력하세요."
 L["View bank/inventory/mail contents from anywhere!"] = "어느 곳에서도 은행/소지품/우편의 내용물을 보여줍니다!"
 L["View Guild Bank contents from anywhere!"] = "어느 곳에서도 길드 금고의 내용물을 보여줍니다!"
--- L["Void Storage data not found. Please visit the Void Storage NPC on this character once to record it."] = "Void Storage data not found. Please visit the Void Storage NPC on this character once to record it."
+L["Void Storage data not found. Please visit the Void Storage NPC on this character once to record it."] = "공허 보관소 데이터를 찾을 수 없습니다. 공허 보관소 NPC를 한번 만나세요." -- Needs review
 L["You do not have any guild bank data to display."] = "당신은 길드 금고 자료를 볼 수 없습니다."
 L["You have not seen the contents of \"%s\" before"] = "당신은 이전에 \"%s\" 금고 내용을 보지 않았습니다"
 

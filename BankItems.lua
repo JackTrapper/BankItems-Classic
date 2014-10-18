@@ -1,8 +1,9 @@
 ﻿--[[*****************************************************************
-	BankItems v60000
+	BankItems v60200
 	17th October 2014
 
 	Author: Xinhuan @ US Frostmourne Alliance
+	Fixes: by many addon Fans.	 
 	*****************************************************************
 	Description:
 		Type /bi or /bankitems to see what is currently in your
@@ -359,7 +360,7 @@ local AHPage             = 1      -- integer, current page of bag 103
 local voidPage           = 1      -- integer, current page of bag 104
 local voidPageSize       = 18     -- integer, size of pages for bag 104
 local reagentBankPage    = 1      -- integer, current page of bag 105 (Reagent Bank)
-local reagentBankPageSize= 12     -- integer, size of pages for bag 105 (Reagent Bank)  
+local reagentBankPageSize= 28     -- integer, size of pages for bag 105 (Reagent Bank)
 local BankItems_Quantity = 1      -- integer, used for hooking EnhTooltip data
 local bagsToUpdate       = {}     -- table, stores data about bags to update on next OnUpdate
 local mailItem           = {}     -- table, stores data about the item to be mailed
@@ -416,6 +417,9 @@ local BANKITEMS_BEHAVIORLIST = {
 	L["Open equipped bag"],
 	L["Open mail bag"],
 	L["Open currency bag"],
+	L["Open auction bag"],
+	L["Open void storage bag"],
+	L["Open reagent bank"],
 }
 local BANKITEMS_BEHAVIORLIST2 = {
 	L["Search bank and bank bags"],
@@ -424,6 +428,10 @@ local BANKITEMS_BEHAVIORLIST2 = {
 	L["Search mailbox"],
 	L["Search guild banks"],
 }
+
+local ICON_AuctionHouse = "Interface\\Icons\\INV_Hammer_15"; --Wooden mace, supposed to look like an auctioneer gavel. The legacy BankItems AH icon. (what we call bag 103)
+local ICON_VoidStorage = "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater"; --The icon used by the second tab of Void Storage (what we call bag 104)
+local ICON_ReagentBag = "Interface\\Icons\\INV_Misc_Bag_09_Green"; --Icon for the Reagent Pouch, and the icon we'll use for the reagent bank (what we call bag 105)
 
 -- Localize some globals
 local _G = getfenv(0)
@@ -485,6 +493,8 @@ local BankItems_NextAHButton
 local BankItems_PrevAHButton
 local BankItems_NextVoidButton
 local BankItems_PrevVoidButton
+local BankItems_NextReagentButton
+local BankItems_PrevReagentButton
 local BankItems_GBFrame_MoneyFrame
 local BankItems_GuildDropdown
 local BankItems_ShowAllRealms_GBCheck
@@ -587,17 +597,17 @@ function BankItems_Bag_OnClick(self, button)
 
 	if not theBag then
 		if bagID == 100 then
-			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(L["Equipped"]))
+			BankItems_Chat(L["%s data not found. Please log on this character."]:format(L["Equipped"]))
 		elseif bagID == 101 then
-			BankItems_Chat(L["Mailbox data not found. Please visit the mailbox on this character once to record it."])
+			BankItems_Chat(L["Mailbox data not found. Please visit the mailbox on this character."])
 		elseif bagID == 102 then
-			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(CURRENCY))
+			BankItems_Chat(L["%s data not found. Please log on this character."]:format(CURRENCY))
 		elseif bagID == 103 then
-			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(AUCTIONS))
+			BankItems_Chat(L["%s data not found. Please visit the Auction House on this character."]:format(AUCTIONS))
 		elseif bagID == 104 then
-			BankItems_Chat(L["Void Storage data not found. Please visit the Void Storage NPC on this character once to record it."])
+			BankItems_Chat(L["%s data not found. Please visit the Void Storage on this character."]:format(VOID_STORAGE))
 		elseif bagID == 105 then
-			BankItems_Chat(L["%s data not found. Please log on this character once to record it."]:format(REAGENT_BANK));
+			BankItems_Chat(L["%s data not found. Please log on this character."]:format(REAGENT_BANK))
 		end
 		return
 	end
@@ -760,7 +770,7 @@ function BankItems_Bag_OnClick(self, button)
 			if ( i == 1 ) then
 				-- Anchor the first item differently if its the backpack frame
 				if ( bagID == 0 ) then
-					itemButton:SetPoint("BOTTOMRIGHT", name, "TOPRIGHT", -12, -208);
+					itemButton:SetPoint("BOTTOMRIGHT", name, "TOPRIGHT", -12, -220);
 				else
 					itemButton:SetPoint("BOTTOMRIGHT", name, "BOTTOMRIGHT", -12, 9);
 				end
@@ -1423,11 +1433,11 @@ function BankItems_CreateFrames()
 	BagButtonAr[102]:SetScale(0.5)
 	BagButtonAr[103]:SetScale(0.5)
 	BagButtonAr[104]:SetScale(0.5)
-	--TODO: Place Reagent Bank somewhere
+	BagButtonAr[105]:SetScale(0.5)
 	BagButtonAr[102]:SetPoint("TOPRIGHT", BagButtonAr[100], "TOPLEFT", 0, 0)
 	BagButtonAr[103]:SetPoint("TOPLEFT", BagButtonAr[100], "BOTTOMLEFT", 0, 0)
 	BagButtonAr[104]:SetPoint("TOPLEFT", BagButtonAr[102], "BOTTOMLEFT", 0, 0)
-	--TODO: Place Reagent Bank somewhere
+	BagButtonAr[105]:SetPoint("TOPRIGHT", BagButtonAr[102], "TOPLEFT", 0, 0)
 
 	-- Create the Money frame
 	BankItems_MoneyFrame = CreateFrame("Frame", "BankItems_MoneyFrame", BankItems_Frame, "SmallMoneyFrameTemplate")
@@ -1624,7 +1634,7 @@ function BankItems_CreateFrames()
 	-- Create the mail text in bag 101
 	BagContainerAr[101].mailtext = BagContainerAr[101]:CreateFontString("BankItems_ContainerFrame101_MailText", "ARTWORK", "GameFontHighlight")
 	BagContainerAr[101].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[101], "TOPLEFT", 95, -64)
-	BagContainerAr[101].mailtext:SetText("1 - 18 / 18")
+	BagContainerAr[101].mailtext:SetText("1-18/18")
 	BagContainerAr[101].mailtext:SetJustifyH("RIGHT")
 
 	-- Create the Next AH page button in bag 103
@@ -1650,7 +1660,7 @@ function BankItems_CreateFrames()
 	-- Create the mail text in bag 103
 	BagContainerAr[103].mailtext = BagContainerAr[103]:CreateFontString("BankItems_ContainerFrame103_MailText", "ARTWORK", "GameFontHighlight")
 	BagContainerAr[103].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[103], "TOPLEFT", 95, -64)
-	BagContainerAr[103].mailtext:SetText("1 - 18 / 18")
+	BagContainerAr[103].mailtext:SetText("1-18/18")
 	BagContainerAr[103].mailtext:SetJustifyH("RIGHT")
 
 	-- Create the Next Void page button in bag 104
@@ -1676,8 +1686,34 @@ function BankItems_CreateFrames()
 	-- Create the mail text in bag 104
 	BagContainerAr[104].mailtext = BagContainerAr[104]:CreateFontString("BankItems_ContainerFrame104_MailText", "ARTWORK", "GameFontHighlight")
 	BagContainerAr[104].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[104], "TOPLEFT", 95, -64)
-	BagContainerAr[104].mailtext:SetText("1 - 18 / 18")
+	BagContainerAr[104].mailtext:SetText("1-18/18")
 	BagContainerAr[104].mailtext:SetJustifyH("RIGHT")
+
+	-- Create the Next Reagent page button in bag 105
+	BankItems_NextReagentButton = CreateFrame("Button", "BankItems_NextReagentButton", BagContainerAr[105])
+	BankItems_NextReagentButton:SetWidth(24)
+	BankItems_NextReagentButton:SetHeight(24)
+	BankItems_NextReagentButton:SetPoint("TOPLEFT", 160, -26)
+	BankItems_NextReagentButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+	BankItems_NextReagentButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Down")
+	BankItems_NextReagentButton:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Disabled")
+	BankItems_NextReagentButton:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
+
+	-- Create the Prev Reagent page button in bag 105
+	BankItems_PrevReagentButton = CreateFrame("Button", "BankItems_PrevReagentButton", BagContainerAr[105])
+	BankItems_PrevReagentButton:SetWidth(24)
+	BankItems_PrevReagentButton:SetHeight(24)
+	BankItems_PrevReagentButton:SetPoint("TOPLEFT", 141, -26)
+	BankItems_PrevReagentButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Up")
+	BankItems_PrevReagentButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Down")
+	BankItems_PrevReagentButton:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Disabled")
+	BankItems_PrevReagentButton:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
+
+	-- Create the mail text in bag 105
+	BagContainerAr[105].mailtext = BagContainerAr[105]:CreateFontString("BankItems_ContainerFrame105_MailText", "ARTWORK", "GameFontHighlight")
+	BagContainerAr[105].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[105], "TOPLEFT", 140, -44)
+	BagContainerAr[105].mailtext:SetText("1-28/84")
+	BagContainerAr[105].mailtext:SetJustifyH("RIGHT")
 
 	-- Title Background
 	BankItems_GBFrame.titlebg = BankItems_GBFrame:CreateTexture(nil, "OVERLAY")
@@ -2058,6 +2094,21 @@ function BankItems_CreateFrames()
 		if voidPage > 1 then
 			voidPage = voidPage - 1
 			BankItems_PopulateBag(104)
+		end
+	end)
+
+	-- The Reagent Bag next button
+	BankItems_NextReagentButton:SetScript("OnClick", function(self)
+		if reagentBankPage * reagentBankPageSize < #bankPlayer.Bag105 then
+			reagentBankPage = reagentBankPage + 1
+			BankItems_PopulateBag(105)
+		end
+	end)
+	-- The Reagent Bag prev button
+	BankItems_PrevReagentButton:SetScript("OnClick", function(self)
+		if reagentBankPage > 1 then
+			reagentBankPage = reagentBankPage - 1
+			BankItems_PopulateBag(105)
 		end
 	end)
 
@@ -2501,9 +2552,9 @@ function BankItems_SlashHandler(msg)
 	else
 		ShowUIPanel(BankItems_Frame)
 		if allBags == 3 then
-			BankItems_OpenBagsByBehavior(true, true, false, false, false)
+			BankItems_OpenBagsByBehavior(true, true, false, false, false, false, false, false)
 		elseif allBags == 2 then
-			BankItems_OpenBagsByBehavior(true, false, false, false, false)
+			BankItems_OpenBagsByBehavior(true, false, false, false, false, false, false, false)
 		else
 			BankItems_OpenBagsByBehavior(unpack(BankItems_Save.Behavior))
 		end
@@ -2629,6 +2680,7 @@ function BankItems_SetPlayer(playerName)
 	mailPage = 1
 	AHPage = 1
 	voidPage = 1
+	reagentBankPage = 1
 end
 
 function BankItems_DelPlayer(playerName)
@@ -2709,7 +2761,7 @@ function BankItems_SaveItems()
 		--ITEM_INVENTORY_BANK_BAG_OFFSET+1 = 5
 		--ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS = 11
 		for bagNum = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
-			local bagNum_ID = BankButtonIDToInvSlotID(bagNum, 1)
+			local bagNum_ID = BankButtonIDToInvSlotID(bagNum, 1)-4		-- BankButtonIDToInvSlotID returns wrong slot IDs for bank bags, -4 to get shifted proper IDs
 			local itemLink = GetInventoryItemLink("player", bagNum_ID)
 			if itemLink then
 				selfPlayer[format("Bag%d", bagNum)] = selfPlayer[format("Bag%d", bagNum)] or newTable()
@@ -2840,6 +2892,9 @@ function BankItems_SaveInvItems(bagID)
 			BankItems_PopulateBag(100)
 		end
 	end
+
+	BankItems_SaveReagentBank()
+
 end
 
 function BankItems_SaveMailbox()
@@ -2940,10 +2995,10 @@ function BankItems_SaveVoidStorage()
 
 	-- Save void storage items as bag 104
 	selfPlayer.Bag104 = selfPlayer.Bag104 or newTable();
-	
-	local iconVoidStorage1 = "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater";
-	local iconVoidStorage2 = "Interface\\Icons\\INV_Enchant_EssenceArcaneLarge";
-	selfPlayer.Bag104.icon = iconVoidStorage1; --"Interface\\Icons\\spell_nature_astralrecal"
+--	if selfPlayer.Bag104 then delTable(selfPlayer.Bag104) end
+--	selfPlayer.Bag104 = newTable()
+		
+	selfPlayer.Bag104.icon = ICON_VoidStorage; 
 
 	--for each void storage tab
 	for k = 1, 2 do
@@ -2973,9 +3028,9 @@ function BankItems_SaveVoidStorage()
 end
 
 function BankItems_SaveReagentBank()
-	if not isBankOpen then
-		return;
-	end;
+--	if not isBankOpen then
+--		return;
+--	end;
 
 	--6.0.2 Read the "Reagent Bank" tab
 	--local REAGENTBANK_CONTAINER = -3;  defined in Constants.lua
@@ -2983,7 +3038,7 @@ function BankItems_SaveReagentBank()
 
 	-- Save Reagent Bank window as bag 105
 	selfPlayer.Bag105 = selfPlayer.Bag105 or newTable();
-	selfPlayer.Bag105.icon = iconVoidStorage1; --"Interface\\Icons\\INV_Misc_Bag_07_Black";
+	selfPlayer.Bag105.icon = ICON_ReagentBank
 
 	local j = 0;
 	local itemPointer;
@@ -2995,6 +3050,7 @@ function BankItems_SaveReagentBank()
 			--print(link);
 			selfPlayer.Bag105[j] = selfPlayer.Bag105[j] or newTable()
 			itemPointer = selfPlayer.Bag105[j]
+			itemPointer.count = count and count > 1 and count or nil; -- fixed to proper item count in reagent bank
 			itemPointer.link = link
 			itemPointer.icon = texture
 		end;
@@ -3006,7 +3062,11 @@ function BankItems_SaveReagentBank()
 		delTable(tremove(selfPlayer.Bag105))
 	end;
 	
-	selfPlayer.Bag105.size = min(max(4, j + j % 2), NUM_REAGENTBANKGENERIC_SLOTS);
+	selfPlayer.Bag105.size = min(max(4, j + j % 2), reagentBankPageSize);
+	if bankPlayer == selfPlayer and BagContainerAr[105] and BagContainerAr[105]:IsVisible() then
+		BagContainerAr[105]:Hide()
+		BagButtonAr[105]:Click()
+	end
 end;
 
 function BankItems_SaveAuctions()
@@ -3017,7 +3077,7 @@ function BankItems_SaveAuctions()
 
 	-- Save Auctions as bag 103
 	selfPlayer.Bag103 = selfPlayer.Bag103 or newTable()
-	selfPlayer.Bag103.icon = "Interface\\Icons\\INV_Hammer_15"
+	selfPlayer.Bag103.icon = ICON_AuctionHouse;
 	selfPlayer.Bag103.time = time()
 
 	for i = 1, totalAuctions do
@@ -3043,7 +3103,7 @@ function BankItems_SaveAuctions()
 	end
 end
 
-function BankItems_OpenBagsByBehavior(bank, inv, equip, mail, currency)
+function BankItems_OpenBagsByBehavior(bank, inv, equip, mail, currency, auction, void, reagent)
 	if inv then
 		for i = 0, 4 do
 			BagContainerAr[i]:Hide()
@@ -3067,6 +3127,18 @@ function BankItems_OpenBagsByBehavior(bank, inv, equip, mail, currency)
 	if currency then
 		BagContainerAr[102]:Hide()
 		BagButtonAr[102]:Click()
+	end
+	if auction then
+		BagContainerAr[103]:Hide()
+		BagButtonAr[103]:Click()
+	end
+	if void then
+		BagContainerAr[104]:Hide()
+		BagButtonAr[104]:Click()
+	end
+	if reagent then
+		BagContainerAr[105]:Hide()
+		BagButtonAr[105]:Click()
 	end
 end
 
@@ -3153,13 +3225,17 @@ function BankItems_PopulateFrame()
 	BagButtonAr[102].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[102]:Show()
 	-- Void Storage
-	BagButtonAr[104].texture:SetTexture("Interface\\Icons\\spell_nature_astralrecal")
+	BagButtonAr[104].texture:SetTexture(ICON_VoidStorage)
 	BagButtonAr[104].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[104]:Show()
 	-- AH Bag
-	BagButtonAr[103].texture:SetTexture("Interface\\Icons\\INV_Hammer_15")
+	BagButtonAr[103].texture:SetTexture(ICON_AuctionHouse)
 	BagButtonAr[103].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[103]:Show()
+	-- Reagent Bag  icon by Mornadan
+	BagButtonAr[105].texture:SetTexture(ICON_ReagentBag)
+	BagButtonAr[105].texture:SetVertexColor(1, 1, 1)
+	BagButtonAr[105]:Show()
 	-- Money
 	BankItems_UpdateMoney()
 	-- Location
@@ -3179,7 +3255,7 @@ function BankItems_PopulateBag(bagID)
 			idx = theBag.size - (bagItem - 1)
 			if (bagID == 101) then  -- Adjust for page number
 				idx = idx + (mailPage - 1) * 18
-				BagContainerAr[101].mailtext:SetText(((mailPage - 1) * 18 + 1).." - "..min(mailPage * 18, #bankPlayer.Bag101).." / "..#bankPlayer.Bag101)
+				BagContainerAr[101].mailtext:SetText(((mailPage - 1) * 18 + 1).."-"..min(mailPage * 18, #bankPlayer.Bag101).."/"..#bankPlayer.Bag101)
 				if theBag.size >= 18 then
 					BagContainerAr[101].mailtext:Show()
 					BankItems_NextMailButton:Show()
@@ -3191,7 +3267,7 @@ function BankItems_PopulateBag(bagID)
 				end
 			elseif (bagID == 103) then  -- Adjust for page number
 				idx = idx + (AHPage - 1) * 18
-				BagContainerAr[103].mailtext:SetText(((AHPage - 1) * 18 + 1).." - "..min(AHPage * 18, #bankPlayer.Bag103).." / "..#bankPlayer.Bag103)
+				BagContainerAr[103].mailtext:SetText(((AHPage - 1) * 18 + 1).."-"..min(AHPage * 18, #bankPlayer.Bag103).."/"..#bankPlayer.Bag103)
 				if theBag.size >= 18 then
 					BagContainerAr[103].mailtext:Show()
 					BankItems_NextAHButton:Show()
@@ -3203,7 +3279,7 @@ function BankItems_PopulateBag(bagID)
 				end
 			elseif (bagID == 104) then -- Adjust for page number
 				idx = idx + (voidPage - 1) * voidPageSize
-				BagContainerAr[104].mailtext:SetText(((voidPage - 1) * voidPageSize + 1).." - "..min(voidPage * voidPageSize, #bankPlayer.Bag104).." / "..#bankPlayer.Bag104)
+				BagContainerAr[104].mailtext:SetText(((voidPage - 1) * voidPageSize + 1).."-"..min(voidPage * voidPageSize, #bankPlayer.Bag104).."/"..#bankPlayer.Bag104)
 				if #bankPlayer.Bag104 >= voidPageSize then
 					BagContainerAr[104].mailtext:Show()
 					BankItems_NextVoidButton:Show()
@@ -3212,6 +3288,18 @@ function BankItems_PopulateBag(bagID)
 					BagContainerAr[104].mailtext:Hide()
 					BankItems_NextVoidButton:Hide()
 					BankItems_PrevVoidButton:Hide()
+				end
+			elseif (bagID == 105) then -- Adjust for page number
+				idx = idx + (reagentBankPage - 1) * reagentBankPageSize
+				BagContainerAr[105].mailtext:SetText(((reagentBankPage - 1) * reagentBankPageSize + 1).."-"..min(reagentBankPage * reagentBankPageSize, #bankPlayer.Bag105).."/"..#bankPlayer.Bag105)
+				if #bankPlayer.Bag105 >= reagentBankPageSize then
+					BagContainerAr[105].mailtext:Show()
+					BankItems_NextReagentButton:Show()
+					BankItems_PrevReagentButton:Show()
+				else
+					BagContainerAr[105].mailtext:Hide()
+					BankItems_NextReagentButton:Hide()
+					BankItems_PrevReagentButton:Hide()
 				end
 			end
 			if theBag[idx] then
@@ -4114,7 +4202,7 @@ function BankItems_Generate_SelfItemCache()
 		local theBag = bankPlayer[format("Bag%d", bagNum)]
 		if theBag then
 			local realSize = theBag.size
-			if bagNum == 101 or bagNum == 103 or (bagNum == 105) then
+			if bagNum == 101 or bagNum == 103 or bagNum == 104 or (bagNum == 105) then
 				realSize = #theBag
 			end
 			
@@ -4141,6 +4229,10 @@ function BankItems_Generate_SelfItemCache()
 							data[temp].currency = (data[temp].currency or 0) + (theBag[bagItem].count or 1)
 						elseif bagNum == 103 then
 							data[temp].auction = (data[temp].auction or 0) + (theBag[bagItem].count or 1)
+						elseif bagNum == 104 then
+							data[temp].voidstorage = (data[temp].voidstorage or 0) + (theBag[bagItem].count or 1)
+						elseif bagNum == 105 then
+							data[temp].reagentbank = (data[temp].reagentbank or 0) + (theBag[bagItem].count or 1)
 						else
 							data[temp].bank = (data[temp].bank or 0) + (theBag[bagItem].count or 1)
 						end
@@ -4212,8 +4304,11 @@ function BankItems_AddTooltipData(self, ...)
 		if BankItems_Save.TTSoulbound then
 			local secondLine = _G[self:GetName().."TextLeft2"]:GetText()
 			local thirdLine = _G[self:GetName().."TextLeft3"]:GetText()
+			local fourthLine = _G[self:GetName().."TextLeft4"]:GetText()	-- fix for unstackable soulbound items
+			local fifthLine = _G[self:GetName().."TextLeft5"]:GetText()	-- fix for unstackable soulbound items
+			local sixthLine = _G[self:GetName().."TextLeft6"]:GetText()	-- fix for unstackable soulbound items
 			local itemStack = select(8, GetItemInfo(item))
-			if itemStack == 1 and (ignoreTooltipsTypes[secondLine] or ignoreTooltipsTypes[thirdLine]) then
+			if itemStack == 1 and (ignoreTooltipsTypes[secondLine] or ignoreTooltipsTypes[thirdLine] or ignoreTooltipsTypes[fourthLine] or ignoreTooltipsTypes[fifthLine] or ignoreTooltipsTypes[sixthLine]) then	-- fix for unstackable soulbound items
 				self.BankItemsDone = true
 				return
 			end
@@ -5161,8 +5256,11 @@ function BankItems_Options_Init(self, event)
 	BankItems_Save.Transparency = BankItems_Save.Transparency or 100
 	BankItems_Save.BagParent = BankItems_Save.BagParent or 1
 	BankItems_Save.WindowStyle = BankItems_Save.WindowStyle or 1
-	BankItems_Save.Behavior = BankItems_Save.Behavior or {false, false, false, false}
+	BankItems_Save.Behavior = BankItems_Save.Behavior or {false, false, false, false, false, false, false, false}
 	BankItems_Save.Behavior[5] = BankItems_Save.Behavior[5] or false	-- currency bag
+	BankItems_Save.Behavior[6] = BankItems_Save.Behavior[6] or false	-- auction bag
+	BankItems_Save.Behavior[7] = BankItems_Save.Behavior[7] or false	-- void storage
+	BankItems_Save.Behavior[8] = BankItems_Save.Behavior[8] or false	-- reagent bank
 	BankItems_Save.Behavior2 = BankItems_Save.Behavior2 or {true, true, false, true}
 	BankItems_Save.Behavior2[5] = BankItems_Save.Behavior2[5] or false	-- Update for guild banks
 	if BankItems_Save.ExportPrefix == nil then
