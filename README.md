@@ -15,6 +15,9 @@ Read below for other commands.
 
 BankItems will also remember the contents of Guild Banks if you are able to view them. Use `/bigb` to see them. Note that Guild Banks are a shared repository and changes can occur to it by other members of your guild.
 
+- Curse: http://www.curse.com/addons/wow/bank-items
+- Project site: http://www.wowace.com/addons/bank-items/
+
 FuBar plugin for BankItems
 --------------
 
