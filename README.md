@@ -1,4 +1,4 @@
-BankItems v60002
+BankItems v60201
 ==============
 
 17th October 2014  
@@ -78,6 +78,7 @@ Changes from v50003 to v60000 (17 October 2014)
 - For use with Live Server v6.0.2.19034
 - NEW: Added Reagent Bank support
 - NEW: Supports Void Storage page 2
+- UPDATED: "Show All Realms" option is now persistent
 
 
 Changes from v50002 to v50003 (13 October 2012)
