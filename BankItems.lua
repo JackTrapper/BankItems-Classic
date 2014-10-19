@@ -390,6 +390,8 @@ local BANKITEMS_VERSIONTEXT	= "BankItems v"..GetAddOnMetadata("BankItems", "Vers
 local BANKITEMS_BOTTOM_SCREEN_LIMIT	= 80 -- Pixels from bottom not to overlap BankItem bags
 local BANKITEMS_UCFA = updateContainerFrameAnchors	-- Remember Blizzard's UCFA for NON-SAFE replacement
 local BAGNUMBERS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 100, 101, 102, 103, 104, 105} -- List of bag numbers used internally by BankItems
+local NUM_REAGENTBANKGENERIC_SLOTS = 98; --1..98 (14x7) Number of slots in the reagent bank. If Blizzard ever creates a constnant, use it instead. They alread have NUM_BANKGENERIC_SLOTS
+
 local BANKITEMS_UIPANELWINDOWS_TABLE = {area = "left", pushable = 11, whileDead = 1} -- UI Panel layout to be used
 local BANKITEMS_INVSLOT = {
 	"HEADSLOT",
@@ -414,10 +416,10 @@ local BANKITEMS_INVSLOT = {
 local BANKITEMS_BEHAVIORLIST = {
 	L["Open bank bags"],
 	L["Open inventory bags"],
-	L["Open equipped bag"],
+	L["Open equipped items bag"],
 	L["Open mail bag"],
-	L["Open currency bag"],
-	L["Open auction bag"],
+	L["Open currencies bag"],
+	L["Open auction house bag"],
 	L["Open void storage bag"],
 	L["Open reagent bank"],
 }
@@ -431,7 +433,10 @@ local BANKITEMS_BEHAVIORLIST2 = {
 
 local ICON_AuctionHouse = "Interface\\Icons\\INV_Hammer_15"; --Wooden mace, supposed to look like an auctioneer gavel. The legacy BankItems AH icon. (what we call bag 103)
 local ICON_VoidStorage = "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater"; --The icon used by the second tab of Void Storage (what we call bag 104)
-local ICON_ReagentBag = "Interface\\Icons\\INV_Misc_Bag_09_Green"; --Icon for the Reagent Pouch, and the icon we'll use for the reagent bank (what we call bag 105)
+local ICON_ReagentBank = "Interface\\Icons\\INV_Enchant_ShardShadowfrostLarge" --old "Interface\\Icons\\INV_Misc_Bag_09_Green"; --Icon for the Reagent Pouch, and the icon we'll use for the reagent bank (what we call bag 105)
+local ICON_Mailbox = "Interface\\Icons\\INV_Letter_02.png" --old "Interface\\MailFrame\\Mail-Icon"  --
+local ICON_Currency = "Interface\\Icons\\INV_Misc_Coin_01" --old "Interface\\Icons\\Spell_Holy_ChampionsGrace"
+local ICON_Equipped_Items = "Interface\\Icons\\INV_Shirt_White_01"
 
 -- Localize some globals
 local _G = getfenv(0)
@@ -1370,7 +1375,7 @@ function BankItems_CreateFrames()
 	temp:SetText(ITEMSLOTTEXT)
 	-- Bag slots text
 	temp = BankItems_Frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-	temp:SetPoint("CENTER", -70, -45)
+	temp:SetPoint("CENTER", -20, -45)
 	temp:SetText(BAGSLOTTEXT)
 
 	-- Close Button (inherits OnClick script to HideUIPanel(this:GetParent()))
@@ -1422,23 +1427,25 @@ function BankItems_CreateFrames()
 	BagButtonAr[9]:SetPoint("TOPLEFT", BagButtonAr[8], "TOPRIGHT", 12, 0)
 	BagButtonAr[10]:SetPoint("TOPLEFT", BagButtonAr[9], "TOPRIGHT", 12, 0)
 	BagButtonAr[11]:SetPoint("TOPLEFT", BagButtonAr[10], "TOPRIGHT", 12, 0)
-	BagButtonAr[0]:SetPoint("TOPLEFT", BagButtonAr[10], "BOTTOMLEFT", 0, -6)
+	BagButtonAr[0]:SetPoint("TOPLEFT", BagButtonAr[11], "BOTTOMLEFT", 0, -7)
 	BagButtonAr[1]:SetPoint("TOPRIGHT", BagButtonAr[0], "TOPLEFT", -12, 0)
 	BagButtonAr[2]:SetPoint("TOPRIGHT", BagButtonAr[1], "TOPLEFT", -12, 0)
 	BagButtonAr[3]:SetPoint("TOPRIGHT", BagButtonAr[2], "TOPLEFT", -12, 0)
 	BagButtonAr[4]:SetPoint("TOPRIGHT", BagButtonAr[3], "TOPLEFT", -12, 0)
-	BagButtonAr[100]:SetPoint("TOPRIGHT", BagButtonAr[4], "TOPLEFT", -24, -4)
-	BagButtonAr[101]:SetPoint("TOPLEFT", BagButtonAr[0], "TOPRIGHT", 12, 0)
-	BagButtonAr[100]:SetScale(0.5)
-	BagButtonAr[102]:SetScale(0.5)
-	BagButtonAr[103]:SetScale(0.5)
-	BagButtonAr[104]:SetScale(0.5)
-	BagButtonAr[105]:SetScale(0.5)
-	BagButtonAr[102]:SetPoint("TOPRIGHT", BagButtonAr[100], "TOPLEFT", 0, 0)
-	BagButtonAr[103]:SetPoint("TOPLEFT", BagButtonAr[100], "BOTTOMLEFT", 0, 0)
-	BagButtonAr[104]:SetPoint("TOPLEFT", BagButtonAr[102], "BOTTOMLEFT", 0, 0)
-	BagButtonAr[105]:SetPoint("TOPRIGHT", BagButtonAr[102], "TOPLEFT", 0, 0)
+	BagButtonAr[105]:SetPoint("TOPRIGHT", BagButtonAr[4], "TOPLEFT", -12, 0) --reagent bank
+	BagButtonAr[104]:SetPoint("TOPRIGHT", BagButtonAr[105], "TOPLEFT", -12, 0) --void storage
 
+	BagButtonAr[100]:SetScale(0.5) --equipped items
+	BagButtonAr[101]:SetScale(0.5) --mailbox
+	BagButtonAr[102]:SetScale(0.5) --currencies
+	BagButtonAr[103]:SetScale(0.5) --auction house
+
+	BagButtonAr[102]:SetPoint("TOPLEFT", BagButtonAr[5], "TOPLEFT", 0, 47)
+	BagButtonAr[100]:SetPoint("TOPLEFT", BagButtonAr[102], "TOPRIGHT", 4, 0)
+	BagButtonAr[103]:SetPoint("TOPLEFT", BagButtonAr[100], "TOPRIGHT", 4, 0)
+	BagButtonAr[101]:SetPoint("TOPLEFT", BagButtonAr[103], "TOPRIGHT", 4, 0)
+
+	
 	-- Create the Money frame
 	BankItems_MoneyFrame = CreateFrame("Frame", "BankItems_MoneyFrame", BankItems_Frame, "SmallMoneyFrameTemplate")
 	BankItems_MoneyFrame:SetPoint("BOTTOMRIGHT", -14, 20)
@@ -1712,7 +1719,7 @@ function BankItems_CreateFrames()
 	-- Create the mail text in bag 105
 	BagContainerAr[105].mailtext = BagContainerAr[105]:CreateFontString("BankItems_ContainerFrame105_MailText", "ARTWORK", "GameFontHighlight")
 	BagContainerAr[105].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[105], "TOPLEFT", 140, -44)
-	BagContainerAr[105].mailtext:SetText("1-28/84")
+	BagContainerAr[105].mailtext:SetText(format("1-28/%d", NUM_REAGENTBANKGENERIC_SLOTS))
 	BagContainerAr[105].mailtext:SetJustifyH("RIGHT")
 
 	-- Title Background
@@ -2869,7 +2876,7 @@ function BankItems_SaveInvItems(bagID)
 	if not bagID or bagID == "inv" then
 		local theBag = selfPlayer.Bag100
 		theBag.link = nil
-		theBag.icon = "Interface\\Icons\\INV_Shirt_White_01"
+		theBag.icon = ICON_Equipped_Items
 		theBag.size = 18
 		for invNum = 1, 18 do
 			local realInvNum = invNum
@@ -2907,7 +2914,7 @@ function BankItems_SaveMailbox()
 
 	-- Save mailbox items as bag 101
 	selfPlayer.Bag101 = selfPlayer.Bag101 or newTable()
-	selfPlayer.Bag101.icon = "Interface\\MailFrame\\Mail-Icon"
+	selfPlayer.Bag101.icon = ICON_Mailbox
 
 	for i = 1, numItems do
 		packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, itemCount, wasRead, x, y, z, isGM, firstItemQuantity = GetInboxHeaderInfo(i)
@@ -2958,7 +2965,7 @@ function BankItems_SaveCurrency()
 
 	-- Save currency items as bag 102
 	selfPlayer.Bag102 = selfPlayer.Bag102 or newTable()
-	selfPlayer.Bag102.icon = "Interface\\Icons\\Spell_Holy_ChampionsGrace"
+	selfPlayer.Bag102.icon = ICON_Currency
 
 	for i = 1, GetCurrencyListSize() do
 		name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(i)
@@ -3034,7 +3041,6 @@ function BankItems_SaveReagentBank()
 
 	--6.0.2 Read the "Reagent Bank" tab
 	--local REAGENTBANK_CONTAINER = -3;  defined in Constants.lua
-	local NUM_REAGENTBANKGENERIC_SLOTS = 84; --1..84 (12x7)
 
 	-- Save Reagent Bank window as bag 105
 	selfPlayer.Bag105 = selfPlayer.Bag105 or newTable();
@@ -3213,15 +3219,15 @@ function BankItems_PopulateFrame()
 		BagButtonAr[i]:Show()
 	end
 	-- Equipped items
-	BagButtonAr[100].texture:SetTexture("Interface\\Icons\\INV_Shirt_White_01")
+	BagButtonAr[100].texture:SetTexture(ICON_Equipped_Items)
 	BagButtonAr[100].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[100]:Show()
 	-- Mail items
-	BagButtonAr[101].texture:SetTexture("Interface\\MailFrame\\Mail-Icon")
+	BagButtonAr[101].texture:SetTexture(ICON_Mailbox)
 	BagButtonAr[101].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[101]:Show()
 	-- Currency Items
-	BagButtonAr[102].texture:SetTexture("Interface\\Icons\\Spell_Holy_ChampionsGrace")
+	BagButtonAr[102].texture:SetTexture(ICON_Currency)
 	BagButtonAr[102].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[102]:Show()
 	-- Void Storage
@@ -3233,7 +3239,7 @@ function BankItems_PopulateFrame()
 	BagButtonAr[103].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[103]:Show()
 	-- Reagent Bag  icon by Mornadan
-	BagButtonAr[105].texture:SetTexture(ICON_ReagentBag)
+	BagButtonAr[105].texture:SetTexture(ICON_ReagentBank)
 	BagButtonAr[105].texture:SetVertexColor(1, 1, 1)
 	BagButtonAr[105]:Show()
 	-- Money
@@ -4042,7 +4048,7 @@ function BankItems_Frame_MailSendSuccess()
 	local targetPlayer = BankItems_Save[mailItem.recipient.."|"..selfPlayerRealm]
 	targetPlayer.Bag101 = targetPlayer.Bag101 or newTable()
 	local targetBag = targetPlayer.Bag101
-	targetBag.icon = "Interface\\MailFrame\\Mail-Icon"
+	targetBag.icon = ICON_Mailbox
 
 	for i = ATTACHMENTS_MAX_SEND, 1, -1 do
 		if mailItem[i].name then
