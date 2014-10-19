@@ -23,7 +23,7 @@
 		occur to it by other members of your guild.
 		
 
-	- Curse: http://www.wowace.com/projects/bank-items
+	- Curse: http://www.curse.com/addons/wow/bank-items
 	- Project site: http://www.wowace.com/addons/bank-items/
 	- GitHub: https://github.com/JoseJimeniz/BankItems
 	
@@ -347,6 +347,13 @@ Xinhuan's Note:
 -- FIXED: Updated TOC
 -- FIXED: Updated to use GetRealmName()
 
+-- 18 October 2014
+-- For use with Live Server v6.0.2.19034
+-- NEW: Support for second Void Storage tab
+-- NEW: Support for Reagent Bank
+-- UPDATED: Changed layout of additional buttons.
+-- REMOVED: Support for oGlow (glowing is now built into WoW)
+
 BankItems_Save           = {}     -- table, SavedVariable, can't be local
 BankItems_SaveGuild      = {}     -- table, another SavedVariable
 local bankPlayer         = nil    -- table reference
@@ -367,9 +374,9 @@ local reagentBankPageSize= 28     -- integer, size of pages for bag 105 (Reagent
 local BankItems_Quantity = 1      -- integer, used for hooking EnhTooltip data
 local bagsToUpdate       = {}     -- table, stores data about bags to update on next OnUpdate
 local mailItem           = {}     -- table, stores data about the item to be mailed
-local sortedKeys         = {}     -- table, for sorted player dropdown menu
-local sortedGuildKeys    = {}     -- table, for sorted guild dropdown menu
-local info               = {}     -- table, for dropdown menu generation
+local sortedKeys         = {}     -- table, for sorted player drop-down menu
+local sortedGuildKeys    = {}     -- table, for sorted guild drop-down menu
+local info               = {}     -- table, for drop-down menu generation
 local BankItemsCFrames   = {      -- table, own bag position tracking
 	bags      = {},
 	bagsShown = 0,
@@ -393,7 +400,7 @@ local BANKITEMS_VERSIONTEXT	= "BankItems v"..GetAddOnMetadata("BankItems", "Vers
 local BANKITEMS_BOTTOM_SCREEN_LIMIT	= 80 -- Pixels from bottom not to overlap BankItem bags
 local BANKITEMS_UCFA = updateContainerFrameAnchors	-- Remember Blizzard's UCFA for NON-SAFE replacement
 local BAGNUMBERS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 100, 101, 102, 103, 104, 105} -- List of bag numbers used internally by BankItems
-local NUM_REAGENTBANKGENERIC_SLOTS = 98; --1..98 (14x7) Number of slots in the reagent bank. If Blizzard ever creates a constnant, use it instead. They alread have NUM_BANKGENERIC_SLOTS
+local NUM_REAGENTBANKGENERIC_SLOTS = 98; --1..98 (14x7) Number of slots in the reagent bank. If Blizzard ever creates a constant, use it instead. They already have NUM_BANKGENERIC_SLOTS
 
 local BANKITEMS_UIPANELWINDOWS_TABLE = {area = "left", pushable = 11, whileDead = 1} -- UI Panel layout to be used
 local BANKITEMS_INVSLOT = {
@@ -453,6 +460,7 @@ local GetMoney = GetMoney
 local GetGuildBankTabInfo, GetGuildBankItemInfo, GetGuildBankItemLink = GetGuildBankTabInfo, GetGuildBankItemInfo, GetGuildBankItemLink
 local GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink = GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink
 local GetItemIcon = GetItemIcon
+local GetItemInfo = GetItemInfo
 
 -- Localize some frame references
 local BankItems_Frame
@@ -1395,8 +1403,8 @@ function BankItems_CreateFrames()
 		InterfaceOptionsFrame_OpenToCategory(BANKITEMS_VERSIONTEXT)
 	end)
 
-	-- Create the 28 main bank buttons
-	for i = 1, 28 do
+	-- Create the 28 main bank buttons (NUM_BANKGENERIC_SLOTS == 28)
+	for i = 1, NUM_BANKGENERIC_SLOTS do
 		ItemButtonAr[i] = CreateFrame("Button", "BankItems_Item"..i, BankItems_Frame, "ItemButtonTemplate")
 		ItemButtonAr[i]:SetID(i)
 		if i == 1 then
@@ -1722,7 +1730,7 @@ function BankItems_CreateFrames()
 	-- Create the mail text in bag 105
 	BagContainerAr[105].mailtext = BagContainerAr[105]:CreateFontString("BankItems_ContainerFrame105_MailText", "ARTWORK", "GameFontHighlight")
 	BagContainerAr[105].mailtext:SetPoint("BOTTOMRIGHT", BagContainerAr[105], "TOPLEFT", 140, -44)
-	BagContainerAr[105].mailtext:SetText(format("1-28/%d", NUM_REAGENTBANKGENERIC_SLOTS))
+	BagContainerAr[105].mailtext:SetText(format("1-%d of %d", reagentBankPageSize, NUM_REAGENTBANKGENERIC_SLOTS))
 	BagContainerAr[105].mailtext:SetJustifyH("RIGHT")
 
 	-- Title Background
@@ -2004,8 +2012,8 @@ function BankItems_CreateFrames()
 
 	-------------------------------------------------
 	-- Set scripts of the various widgets
-	-- The 28 main bank buttons
-	for i = 1, 28 do
+	-- The 28 main bank buttons (NUM_BANKGENERIC_SLOTS == 28)
+	for i = 1, NUM_BANKGENERIC_SLOTS do
 		ItemButtonAr[i]:SetScript("OnLeave", BankItems_Button_OnLeave)
 		ItemButtonAr[i]:SetScript("OnEnter", BankItems_Button_OnEnter)
 		ItemButtonAr[i]:SetScript("OnClick", BankItems_Button_OnClick)
@@ -2235,7 +2243,7 @@ function BankItems_UpgradeDataToTBC()
 	local bagString
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if value[num] then
 					value[num].link = gsub(value[num].link, "item:(%d+):(%d+):(%d+):(%d+)|h", "item:%1:0:0:0:0:0:%3:%4|h")
 				end
@@ -2265,7 +2273,7 @@ function BankItems_UpgradeDataTo24001()
 	local bagString
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if value[num] then
 					if value[num].link then value[num].icon = nil end
 					if value[num].count == 1 then value[num].count = nil end
@@ -2311,7 +2319,7 @@ function BankItems_UpgradeDataToWrath()
 	local bagString
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if value[num] then
 					if value[num].link then
 						value[num].link = gsub(value[num].link, "item:(.-):(.-):(.-):(.-):(.-):(.-):(.-):(.-)|h", "item:%1:%2:%3:%4:%5:%6:%7:%8:70|h")
@@ -2359,7 +2367,7 @@ function BankItems_UpgradeDataToCata()
 	local bagString
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if value[num] then
 					if value[num].link then
 						value[num].link = gsub(value[num].link, "item:(.-):(.-):(.-):(.-):(.-):(.-):(.-):(.-):(.-)|h", "item:%1:%2:%3:%4:%5:%6:%7:%8:%9:0|h")
@@ -2408,7 +2416,7 @@ function BankItems_UpgradeDataToPanda()
 	local bagString
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if value[num] then
 					if value[num].link then
 						value[num].link = gsub(value[num].link, "item:([-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-)|h%[", "item:%1:0|h[")
@@ -2756,7 +2764,7 @@ end
 function BankItems_SaveItems()
 	if isBankOpen then
 		--Read the bank window itself (bagId = BANK_CONTAINER = -1 --> the bank window)
-		for num = 1, 28 do
+		for num = 1, NUM_BANKGENERIC_SLOTS do
 			local texture, count, locked, quality, readable, lootable, link = GetContainerItemInfo(BANK_CONTAINER, num)
 			if link then
 				selfPlayer[num] = selfPlayer[num] or newTable()
@@ -3172,9 +3180,16 @@ function BankItems_PopulateFrame()
 	else
 		BankItems_Portrait:SetTexture("Interface\\QuestFrame\\UI-QuestLog-BookIcon")
 	end
-	-- 28 bank slots
-	for i = 1, 28 do
+	-- 28 bank slots (NUM_BANKGENERIC_SLOTS == 28)
+	for i = 1, NUM_BANKGENERIC_SLOTS do
 		if bankPlayer[i] then
+			local quality = select(3, GetItemInfo(bankPlayer[i].link))
+			if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
+				ItemButtonAr[i].IconBorder:Show()
+				ItemButtonAr[i].IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b)
+			else
+				ItemButtonAr[i].IconBorder:Hide()
+			end
 			ItemButtonAr[i].texture:SetTexture(GetItemIcon(bankPlayer[i].link))
 			if bankPlayer[i].count then
 				ItemButtonAr[i].count:Show()
@@ -3196,6 +3211,7 @@ function BankItems_PopulateFrame()
 		else
 			ItemButtonAr[i].texture:SetTexture()
 			ItemButtonAr[i].count:Hide()
+			ItemButtonAr[i].IconBorder:Hide()
 			ItemButtonAr[i].searchOverlay:Hide()
 		end
 	end
@@ -3318,6 +3334,13 @@ function BankItems_PopulateBag(bagID)
 					--button.texture:SetTexture(theBag[idx].icon)
 					button.texture:SetTexture(GetCoinIcon(theBag[idx].link))
 				else
+					local quality = select(3, GetItemInfo(theBag[idx].link))
+					if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
+						button.IconBorder:Show()
+						button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b)
+					else
+						button.IconBorder:Hide()
+					end
 					button.texture:SetTexture(GetItemIcon(theBag[idx].link))
 				end
 				if theBag[idx].count then
@@ -3351,6 +3374,7 @@ function BankItems_PopulateBag(bagID)
 					button.texture:SetTexture()
 				end
 				button.count:Hide()
+				button.IconBorder:Hide()
 				button.searchOverlay:Hide()
 			end
 		end
@@ -3367,7 +3391,7 @@ function BankItems_FilterBags()
 	if not BankItems_Frame:IsVisible() then return end
 
 	if filterSearchText == "" or filterSearchText == SEARCH then
-		for num = 1, 28 do
+		for num = 1, NUM_BANKGENERIC_SLOTS do
 			ItemButtonAr[num].searchOverlay:Hide()
 		end
 		for _, bagID in ipairs(BAGNUMBERS) do
@@ -3379,7 +3403,7 @@ function BankItems_FilterBags()
 			end
 		end
 	else
-		for num = 1, 28 do
+		for num = 1, NUM_BANKGENERIC_SLOTS do
 			if bankPlayer[num] then
 				local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture = GetItemInfo(bankPlayer[num].link)
 				local temp = strmatch(bankPlayer[num].link, "%[(.*)%]")
@@ -3635,7 +3659,7 @@ function BankItems_GenerateExportText()
 		-- Group similar items together in the report
 		local data = newTable()
 		local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture
-		for num = 1, 28 do
+		for num = 1, NUM_BANKGENERIC_SLOTS do
 			if bankPlayer[num] then
 				itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture = GetItemInfo(bankPlayer[num].link)
 				if itemType then
@@ -3690,7 +3714,7 @@ function BankItems_GenerateExportText()
 		delTable(data)
 	else
 		-- Don't group similar items together in the report
-		for num = 1, 28 do
+		for num = 1, NUM_BANKGENERIC_SLOTS do
 			if bankPlayer[num] then
 				if BankItems_Save.ExportPrefix then
 					prefix = format(L["Bank Item %d:"], num).." "
@@ -3770,7 +3794,7 @@ function BankItems_Search(searchText)
 			local _, realm = strsplit("|", key)
 			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or (realm == selfPlayerRealm and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
 				if BankItems_Save.Behavior2[1] then
-					for num = 1, 28 do
+					for num = 1, NUM_BANKGENERIC_SLOTS do
 						if bankPlayer[num] then
 							temp = strmatch(bankPlayer[num].link, "%[(.*)%]")
 							if strfind(strlower(temp), searchText, 1, true) then
@@ -3902,7 +3926,7 @@ function BankItems_Search(searchText)
 			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or (realm == selfPlayerRealm and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
 				count = 0
 				if BankItems_Save.Behavior2[1] then
-					for num = 1, 28 do
+					for num = 1, NUM_BANKGENERIC_SLOTS do
 						if bankPlayer[num] then
 							if BankItems_Save.ExportPrefix then
 								prefix = "     "..L["Bank Item %d:"]:format(num).." "
@@ -4127,7 +4151,7 @@ function BankItems_Generate_ItemCache()
 	for key, bankPlayer in pairs(BankItems_Save) do
 		local _, realm = strsplit("|", key)
 		if type(bankPlayer) == "table" and selfPlayer ~= bankPlayer and realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or bankPlayer.faction == selfPlayer.faction) and key ~= "Behavior" and key ~= "Behavior2" then
-			for num = 1, 28 do
+			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if bankPlayer[num] then
 					--temp = strmatch(bankPlayer[num].link, "%[(.*)%]")
 					temp = tonumber(strmatch(bankPlayer[num].link, "item:(%d+):"))
@@ -4195,7 +4219,7 @@ function BankItems_Generate_SelfItemCache()
 	local temp
 	local data = newTable()
 	local bankPlayer = selfPlayer
-	for num = 1, 28 do
+	for num = 1, NUM_BANKGENERIC_SLOTS do
 		if bankPlayer[num] then
 			--temp = strmatch(bankPlayer[num].link, "%[(.*)%]")
 			temp = tonumber(strmatch(bankPlayer[num].link, "item:(%d+):"))
@@ -4708,6 +4732,13 @@ function BankItems_PopulateGuildBank(guildName, tab)
 			for i = 1, 98 do
 				if selfGuild[tab][i] then
 					-- Item exists
+					local quality = select(3, GetItemInfo(selfGuild[tab][i].link))
+					if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
+						GBButtonAr[i].IconBorder:Show()
+						GBButtonAr[i].IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b)
+					else
+						GBButtonAr[i].IconBorder:Hide()
+					end
 					GBButtonAr[i].texture:SetTexture(GetItemIcon(selfGuild[tab][i].link))
 					if selfGuild[tab][i].count then
 						GBButtonAr[i].count:Show()
@@ -4718,6 +4749,7 @@ function BankItems_PopulateGuildBank(guildName, tab)
 				else
 					-- Item doesn't exist
 					GBButtonAr[i].texture:SetTexture()
+					GBButtonAr[i].IconBorder:Hide()
 					GBButtonAr[i].count:Hide()
 				end
 				GBButtonAr[i]:Show()
@@ -5564,100 +5596,4 @@ do
 			end
 		end)
 	BankItems_ExportFrame_Scroll:SetScrollChild(BankItems_ExportFrame_ScrollText)
-end
-
--- Add support for oGlow (github version - http://github.com/haste/oGlow, not the wowinterface one)
-if oGlow and oGlow.RegisterPipe then
-	do  -- bags
-		local hook
-
-		local update = function(bagID)
-			if(oGlow:IsPipeEnabled'bankitemsbags') then
-				theBag = bankPlayer[format("Bag%d", bagID)]
-				if theBag and theBag.size then
-					for bagItem = 1, theBag.size do
-						idx = theBag.size - (bagItem - 1)
-						if (bagID == 101) then  -- Adjust for page number
-							idx = idx + (mailPage - 1) * 18
-						elseif (bagID == 103) then  -- Adjust for page number
-							idx = idx + (AHPage - 1) * 18
-						elseif (bagID == 104) then  -- Adjust for page number
-							idx = idx + (voidPage - 1) * voidPageSize
-						elseif (bagID == 105) then  -- Adjust for page number
-							idx = idx + (reagentBankPage - 1) * reagentBankPageSize
-						end
-						if theBag[idx] then
-							oGlow:CallFilters('bags', BagContainerAr[bagID][bagItem], theBag[idx].link)
-						else
-							oGlow:CallFilters('bags', BagContainerAr[bagID][bagItem], nil)
-						end
-					end
-				end
-			end
-		end
-
-		local enable = function(self)
-			if(not hook) then
-				hooksecurefunc("BankItems_PopulateBag", update)
-				hook = true
-			end
-		end
-
-		oGlow:RegisterPipe('bankitemsbags', enable, nil, update, "BankItems Bag Frames", nil)
-		oGlow:EnablePipe('bankitemsbags')
-	end
-	do  -- bank
-		local hook
-
-		local update = function()
-			if(oGlow:IsPipeEnabled'bankitemsbank') then
-				for i = 1, 28 do
-					if bankPlayer[i] then
-						oGlow:CallFilters('bank', ItemButtonAr[i], bankPlayer[i].link)
-					else
-						oGlow:CallFilters('bank', ItemButtonAr[i], nil)
-					end
-				end
-			end
-		end
-
-		local enable = function(self)
-			if(not hook) then
-				hooksecurefunc("BankItems_PopulateFrame", update)
-				hook = true
-			end
-		end
-
-		oGlow:RegisterPipe('bankitemsbank', enable, nil, update, "BankItems Bank Frame", nil)
-		oGlow:EnablePipe('bankitemsbank')
-	end
-	do  -- guild bank
-		local hook
-
-		local update = function(guildName, tab)
-			if(oGlow:IsPipeEnabled'bankitemsgbank') then
-				local selfGuild = BankItems_SaveGuild[guildName]
-				tab = tab or 1
-				if selfGuild[tab] and selfGuild[tab].seen then
-					for i = 1, 98 do
-						if selfGuild[tab][i] then
-							oGlow:CallFilters('gbank', GBButtonAr[i], selfGuild[tab][i].link)
-						else
-							oGlow:CallFilters('gbank', GBButtonAr[i], nil)
-						end
-					end
-				end
-			end
-		end
-
-		local enable = function(self)
-			if(not hook) then
-				hooksecurefunc("BankItems_PopulateGuildBank", update)
-				hook = true
-			end
-		end
-
-		oGlow:RegisterPipe('bankitemsgbank', enable, nil, update, "BankItems Guild Bank Frame", nil)
-		oGlow:EnablePipe('bankitemsgbank')
-	end
 end
