@@ -361,7 +361,6 @@ local bankPlayerName     = nil    -- string
 local selfPlayer         = nil    -- table reference
 local selfPlayerName     = nil    -- string
 local selfPlayerRealm    = nil    -- string
-local allRealms          = false  -- boolean, show all realms or not
 local isBankOpen         = false  -- boolean, whether the real bank is open
 local isVoidOpen         = false  -- boolean, whether void storage is open
 local isGuildBankOpen    = false  -- boolean, whether the real guild bank is open
@@ -385,6 +384,8 @@ BankItems_Cache        = {} -- table, contains a cache of items of every charact
 BankItems_SelfCache    = {} -- table, contains a cache of only the player's items
 BankItems_GuildCache   = {} -- table, contains a cache of selected guild's items
 BankItems_TooltipCache = {} -- table, contains a cache of tooltip lines that have been added
+BankItems_FactionCache = {} -- table, contains a cache of player faction info
+BankItems_GFactionCache = {} -- table, contains a cache of guild faction info
 local filterSearchText = ""  -- filter text
 
 -- Cataclysm and backwards compatibility
@@ -1550,11 +1551,11 @@ function BankItems_CreateFrames()
 	BankItems_ShowAllRealms_Check:SetWidth(16)
 	BankItems_ShowAllRealms_Check:SetHeight(16)
 	BankItems_ShowAllRealms_Check:SetHitRectInsets(0, -100, 0, 0)
-	BankItems_ShowAllRealms_Check:SetChecked(allRealms)
+	BankItems_ShowAllRealms_Check:SetChecked(BankItems_Save.ShowAllRealms)
 	BankItems_ShowAllRealms_CheckText:SetText(L["Show All Realms"])
 	BankItems_ShowAllRealms_Check:SetScript("OnClick", function(self)
-		allRealms = self:GetChecked()
-		if allRealms then
+		BankItems_Save.ShowAllRealms = self:GetChecked()
+		if BankItems_Save.ShowAllRealms then
 			PlaySound("igMainMenuOptionCheckBoxOff")
 			BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_Check)
 			BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_GBCheck)
@@ -1567,7 +1568,9 @@ function BankItems_CreateFrames()
 		BankItems_UpdateMoney()
 		BankItems_GuildDropdownGenerateKeys()
 		CloseDropDownMenus()
-		BankItems_ShowAllRealms_GBCheck:SetChecked(allRealms)
+		BankItems_ShowAllRealms_GBCheck:SetChecked(BankItems_Save.ShowAllRealms)
+		BankItems_Generate_ItemCache()
+		BankItems_Generate_GuildItemCache()
 	end)
 
 	-- Create the Show Opposite Faction checkbox
@@ -1880,11 +1883,11 @@ function BankItems_CreateFrames()
 	BankItems_ShowAllRealms_GBCheck:SetWidth(16)
 	BankItems_ShowAllRealms_GBCheck:SetHeight(16)
 	BankItems_ShowAllRealms_GBCheck:SetHitRectInsets(0, -100, 0, 0)
-	BankItems_ShowAllRealms_GBCheck:SetChecked(allRealms)
+	BankItems_ShowAllRealms_GBCheck:SetChecked(BankItems_Save.ShowAllRealms)
 	BankItems_ShowAllRealms_GBCheckText:SetText(L["Show All Realms"])
 	BankItems_ShowAllRealms_GBCheck:SetScript("OnClick", function(self)
-		allRealms = self:GetChecked()
-		if allRealms then
+		BankItems_Save.ShowAllRealms = self:GetChecked()
+		if BankItems_Save.ShowAllRealms then
 			PlaySound("igMainMenuOptionCheckBoxOff")
 			BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_Check)
 			BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_GBCheck)
@@ -1897,7 +1900,7 @@ function BankItems_CreateFrames()
 		BankItems_UpdateMoney()
 		BankItems_GuildDropdownGenerateKeys()
 		CloseDropDownMenus()
-		BankItems_ShowAllRealms_Check:SetChecked(allRealms)
+		BankItems_ShowAllRealms_Check:SetChecked(BankItems_Save.ShowAllRealms)
 	end)
 
 	-- Create the Show Opposite Faction checkbox
@@ -1923,6 +1926,15 @@ function BankItems_CreateFrames()
 		BankItems_Generate_ItemCache()
 		BankItems_Generate_GuildItemCache()
 	end)
+
+	--Update Show Opposite Faction checkbox
+	if BankItems_Save.ShowAllRealms then
+		BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_Check)
+		BlizzardOptionsPanel_CheckButton_Disable(BankItems_ShowOppositeFaction_GBCheck)
+	else
+		BlizzardOptionsPanel_CheckButton_Enable(BankItems_ShowOppositeFaction_Check)
+		BlizzardOptionsPanel_CheckButton_Enable(BankItems_ShowOppositeFaction_GBCheck)
+	end
 
 	-- Create the Export Button
 	BankItems_GBExportButton = CreateFrame("Button", "BankItems_GBExportButton", BankItems_GBFrame)
@@ -3164,7 +3176,7 @@ function BankItems_UpdateMoney()
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
 			local _, realm = strsplit("|", key)
-			if allRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
+			if BankItems_Save.ShowAllRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
 				total = total + (value.money or 0)
 			end
 		end
@@ -3601,7 +3613,7 @@ function BankItems_UserDropdownGenerateKeys()
 	for key, value in pairs(BankItems_Save) do
 		if type(value) == "table" and key ~= "Behavior" and key ~= "Behavior2" then
 			local _, realm = strsplit("|", key)
-			if allRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
+			if BankItems_Save.ShowAllRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
 				tinsert(sortedKeys, key)
 			end
 		end
@@ -4150,7 +4162,8 @@ function BankItems_Generate_ItemCache()
 	local data = newTable()
 	for key, bankPlayer in pairs(BankItems_Save) do
 		local _, realm = strsplit("|", key)
-		if type(bankPlayer) == "table" and selfPlayer ~= bankPlayer and realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or bankPlayer.faction == selfPlayer.faction) and key ~= "Behavior" and key ~= "Behavior2" then
+		if type(bankPlayer) == "table" and selfPlayer ~= bankPlayer and (BankItems_Save.ShowAllRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or bankPlayer.faction == selfPlayer.faction))) and key ~= "Behavior" and key ~= "Behavior2" then
+			BankItems_FactionCache[key] = bankPlayer.faction
 			for num = 1, NUM_BANKGENERIC_SLOTS do
 				if bankPlayer[num] then
 					--temp = strmatch(bankPlayer[num].link, "%[(.*)%]")
@@ -4288,7 +4301,8 @@ function BankItems_Generate_GuildItemCache()
 
 	for key, bankPlayer in pairs(BankItems_SaveGuild) do
 		local _, realm = strsplit("|", key)
-		if realm == selfPlayerRealm and bankPlayer.track and (BankItems_Save.ShowOppositeFaction or bankPlayer.faction == selfPlayer.faction) then
+		if realm == selfPlayerRealm and bankPlayer.track and (BankItems_Save.ShowAllRealms or (BankItems_Save.ShowOppositeFaction or bankPlayer.faction == selfPlayer.faction)) then
+			BankItems_GFactionCache[key] = bankPlayer.faction
 			for tab = 1, MAX_GUILDBANK_TABS do
 				if bankPlayer[tab] and bankPlayer[tab].seen then
 					-- Tab exists and seen before
@@ -4388,6 +4402,16 @@ function BankItems_AddTooltipData(self, ...)
 		if BankItems_Cache[item] then
 			for who, counttable in pairs(BankItems_Cache[item]) do
 				local text
+				local name
+				local n, r = strsplit("|", who)
+				if selfPlayerRealm ~= r then
+					name = n.."-"..r
+				else
+					name = n
+				end
+				if BankItems_FactionCache[who] ~= selfPlayer.faction then
+					name = name.."*"
+				end
 				totalCount = totalCount + counttable.count
 				
 				baginfos[1][2] = counttable.bank
@@ -4398,7 +4422,7 @@ function BankItems_AddTooltipData(self, ...)
 				baginfos[6][2] = counttable.currency
 				baginfos[7][2] = counttable.voidstorage
 				baginfos[8][2] = counttable.reagentbank
-				text = format("%s %s %d [", strsplit("|", who), L["has"], counttable.count);
+				text = format("%s %s %d [", name, L["has"], counttable.count);
 				local first = true
 				for i = 1, #baginfos do
 					if baginfos[i][2] then
@@ -4414,7 +4438,18 @@ function BankItems_AddTooltipData(self, ...)
 		end
 		if BankItems_GuildCache[item] then
 			for who, counttable in pairs(BankItems_GuildCache[item]) do
-				local text = ("<%s> %s %d [%s %d]"):format(strsplit("|", who), L["has"], counttable.count, GUILD_BANK, counttable.gbank)
+				local n, r = strsplit("|", who)
+				local name
+				local n, r = strsplit("|", who)
+				if selfPlayerRealm ~= r then
+					name = n.."-"..r
+				else
+					name = n
+				end
+				if BankItems_GFactionCache[who] ~= selfPlayer.faction then
+					name = name.."*"
+				end
+				local text = ("<%s> %s %d [%s %d]"):format(name, L["has"], counttable.count, GUILD_BANK, counttable.gbank)
 				totalCount = totalCount + counttable.count
 				tinsert(BankItems_TooltipCache[item], text)
 				characters = characters + 1
@@ -4681,7 +4716,7 @@ function BankItems_GuildDropdownGenerateKeys()
 	for key, value in pairs(BankItems_SaveGuild) do
 		if type(value) == "table" then
 			local _, realm = strsplit("|", key)
-			if allRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
+			if BankItems_Save.ShowAllRealms or (realm == selfPlayerRealm and (BankItems_Save.ShowOppositeFaction or value.faction == selfPlayer.faction)) then
 				tinsert(sortedGuildKeys, key)
 			end
 		end
@@ -5321,6 +5356,9 @@ function BankItems_Options_Init(self, event)
 	end
 	if BankItems_Save.ShowOppositeFaction == nil then
 		BankItems_Save.ShowOppositeFaction = false
+	end
+	if BankItems_Save.ShowAllRealms == nil then
+		BankItems_Save.ShowAllRealms = false
 	end
 
 	-- Apply saved settings
