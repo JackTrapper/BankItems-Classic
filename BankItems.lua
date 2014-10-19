@@ -21,9 +21,12 @@
 		if you are able to view them. Use /bigb to see them. Note
 		that Guild Banks are a shared repository and changes can
 		occur to it by other members of your guild.
+		
 
-	Download:
-		BankItems   - http://www.wowace.com/projects/bank-items
+	- Curse: http://www.wowace.com/projects/bank-items
+	- Project site: http://www.wowace.com/addons/bank-items/
+	- GitHub: https://github.com/JoseJimeniz/BankItems
+	
 
 	Plugins:
 		These plugins allow clicking on the panel/plugin icon to
