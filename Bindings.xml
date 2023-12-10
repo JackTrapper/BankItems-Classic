@@ -1,14 +1,14 @@
-﻿<Bindings>
-	<Binding name="TOGGLEBANKITEMS" header="BANKITEMS">
+<Bindings>
+	<Binding name="TOGGLEBANKITEMS" header="BANKITEMS" category="ADDONS">
 		BankItems_SlashHandler()
 	</Binding>
-	<Binding name="TOGGLEBANKITEMSALL">
+	<Binding name="TOGGLEBANKITEMSALL" category="ADDONS">
 		BankItems_SlashHandler("all")
 	</Binding>
-	<Binding name="TOGGLEBANKITEMSBANK">
+	<Binding name="TOGGLEBANKITEMSBANK" category="ADDONS">
 		BankItems_SlashHandler("allbank")
 	</Binding>
-	<Binding name="TOGGLEBANKITEMSGUILDBANK">
+	<Binding name="TOGGLEBANKITEMSGUILDBANK" category="ADDONS">
 		BankItems_DisplayGuildBank()
 	</Binding>
 </Bindings>
