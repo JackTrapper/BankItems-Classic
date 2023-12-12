@@ -198,21 +198,20 @@ Xinhuan's Note:
 
 BankItems_Save			= {}		-- table, SavedVariable, can't be local
 
----@class bankPlayer
----@field location any
----@field money any
----@field NumBankSlots any
-local bankPlayer					= nil		-- table reference
+---@class Player
+---@field location string     -- the current map instance name. (e.g. "Stormwind City"). Returned from GetRealZoneText()
+---@field money number        -- the amount of money the player's character has, in copper. Returned from GetMoney()
+---@field NumBankSlots number -- the number of bag slots already purchased. Returned from GetNumBankSlots()
 
+---@type Player
+local bankPlayer					= nil		-- table reference
 local bankPlayerName			= ""		-- string, name of the player associated with bankPlayer
 
----@class selfPlayer
----@field location any
----@field money any
----@field NumBankSlots any
+---@class SelfPlayer: Player
 local selfPlayer					= nil		-- table reference
-local selfPlayerName			= ""		-- string, name of the player associated with selfPlayer
+local selfPlayerName				= ""		-- string, name of the player associated with selfPlayer
 local selfPlayerRealm			= ""		-- string
+
 local isBankOpen					= false		-- boolean, whether the real bank is open
 local BankItems_Quantity	= 1		-- integer, used for hooking EnhTooltip data
 local bagsToUpdate				= {}		-- table, stores data about bags to update on next OnUpdate
@@ -271,6 +270,9 @@ local GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink = GetInboxHeaderInfo, G
 -- They were removed in 9.0.1 (Shadowlands)
 -- https://warcraft.wiki.gg/wiki/Patch_9.0.1/API_changes
 -- TODO: Figure out how to change WoWAPI to classic mode
+
+-- @global_constant: KEYRING_CONTAINER
+-- MY_CONSTANT exists at runtime within the specific environment
 local KEYRING_CONTAINER				= KEYRING_CONTAINER or -2
 local NUM_CONTAINER_COLUMNS		= NUM_CONTAINER_COLUMNS or 4
 local MAX_BG_TEXTURES				= MAX_BG_TEXTURES or 2
@@ -688,10 +690,12 @@ function BankItems_Frame_OnEvent(self, event, ...)
 			updated for the item when the event fires even if events for additional bank slots
 			for that item haven't fired yet. The additional bank slot events for each item
 			could be delayed a few seconds from the first event set.--]]
-			if arg1 and bankSlotsToUpdate then
-				bankSlotsToUpdate[#bankSlotsToUpdate + 1] = tonumber(arg1)
-				BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
-			end
+			--it looks like bankSlotsToUpdate was going to be a global list; we add arg1 to it, and then would deal with it later
+			--Except there is no code elsewhere that actually uses it; and so bankSlotsToupdate is always nil; so this code isn't used
+			--if arg1 and bankSlotsToUpdate then
+			--	bankSlotsToUpdate[#bankSlotsToUpdate + 1] = tonumber(arg1)
+			--	BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
+			--end
 		elseif arg1 and arg1 <= NUM_BANKGENERIC_SLOTS then
 			bagsToUpdate.bank = true
 			BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
@@ -751,7 +755,7 @@ function BankItems_UpdateFrame_OnUpdate(self, elapsed)
 	end
 	if bagsToUpdate.bank then
 		-- Hawksy: adding this bit (from retail) seems to fix the bank contents bug -- monitor it
-		BankItems_SaveItems(true)
+		BankItems_SaveItems()
 		bagsToUpdate.bank = nil
 	end
 	if (bagsToUpdate.inv) then
@@ -1180,7 +1184,8 @@ function BankItems_SlashHandler(msg)
 		elseif (allBags == 2) then
 			BankItems_OpenBagsByBehavior(true, false, false)
 		else
-			BankItems_OpenBagsByBehavior(unpack(BankItems_Save.Behavior))
+			local bank, inventory, equip = unpack(BankItems_Save.Behavior)
+			BankItems_OpenBagsByBehavior(bank, inventory, equip)
 		end
 	end
 end
@@ -1244,7 +1249,7 @@ function BankItems_DelPlayer(playerName)
 		-- Deleting yourself
 		delTable(BankItems_Save[playerName])
 		BankItems_Save[playerName] = nil
-		selfPlayer = nil
+		--selfPlayer = nil --cannot assign nil, which we don't need to, as we set it to "newTable()" 2 lines down anyway
 
 		-- Create new table and reassign references to it
 		BankItems_Save[selfPlayerName] = newTable()
@@ -1481,6 +1486,9 @@ function BankItems_SaveMailbox()
 	selfPlayer.Bag101.outOfDate = nil
 end
 
+---@param bank boolean
+---@param inv boolean
+---@param equip boolean
 function BankItems_OpenBagsByBehavior(bank, inv, equip)
 	if inv then
 		for i = 0, 4 do
@@ -1530,7 +1538,7 @@ function BankItems_PopulateFrame()
 
 	-- Portrait
 	if bankPlayer == selfPlayer then
-		SetPortraitTexture(BankItems_Portrait, "player")
+		SetPortraitTexture(_G["BankItems_Portrait"], "player")
 	else
 		_G["BankItems_Portrait"]:SetTexture("Interface\\QuestFrame\\UI-QuestLog-BookIcon")
 	end
@@ -1589,11 +1597,15 @@ function BankItems_PopulateFrame()
 end
 
 function BankItems_PopulateBag(bagID)
-	local _, button, theBag, idx, textureName
+	local button, theBag, textureName
+	---@type integer
+	local idx
+
 	theBag = bankPlayer["Bag"..bagID]
 	if theBag and theBag.size then
 		for bagItem = 1, theBag.size do
 			button = BagContainerAr[bagID][bagItem]
+
 			idx = theBag.size - (bagItem - 1)
 			if (bagID == 100 and idx == 20) then	-- Treat slot 20 as slot 0 (ammo slot)
 				idx = 0
@@ -1612,9 +1624,12 @@ function BankItems_PopulateBag(bagID)
 			end
 			if (theBag[idx]) then
 				if (bagID == 100) then
-					_, textureName = GetInventorySlotInfo(BANKITEMS_INVSLOT[idx]:upper()) --The function is case insensitive, but the type system doesn't know that.
+					local invSlotName = BANKITEMS_INVSLOT[idx]
+					invSlotName = string.upper(invSlotName)  --The function is case insensitive, but the type system doesn't know that. It thinks GetInventorySlotInfo only accepts the UPPERCASE enum values
+					_, textureName = GetInventorySlotInfo(invSlotName)
 				end
 				button.texture:SetTexture(theBag[idx].icon or textureName)
+
 				if (theBag[idx].count > 1) then
 					button.count:Show()
 					button.count:SetText(theBag[idx].count)
@@ -1806,7 +1821,9 @@ function BankItems_UserDropdown_OnClick(button, playerName, text)
 
 	BankItems_Frame_OnHide()
 	BankItems_PopulateFrame()
-	BankItems_OpenBagsByBehavior(unpack(BankItems_Save.Behavior))
+
+	local bank, inventory, equip = unpack(BankItems_Save.Behavior)
+	BankItems_OpenBagsByBehavior(bank, inventory, equip)
 end
 
 function BankItems_UserDropdown_Initialize()
@@ -2417,30 +2434,30 @@ end)
 _G["BankItems_ShowAllRealms_Check"]:SetScript("OnLeave", BankItems_Button_OnLeave)
 
 -- The User Dropdown
-BankItems_UserDropdown:SetScript("OnEnter", function(self)
+_G["BankItems_UserDropdown"]:SetScript("OnEnter", function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 	GameTooltip:SetText(BANKITEMS_USERDROPDOWN_TOOLTIP_TEXT, nil, nil, nil, nil, 1)
 end)
-BankItems_UserDropdown:SetScript("OnLeave", BankItems_Button_OnLeave)
+_G["BankItems_UserDropdown"]:SetScript("OnLeave", BankItems_Button_OnLeave)
 
 -- The Export Button
-BankItems_ExportButton:SetScript("OnEnter", function(self)
+_G["BankItems_ExportButton"]:SetScript("OnEnter", function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 	GameTooltip:SetText(BANKITEMS_EXPORTBUTTON_TEXT, nil, nil, nil, nil, 1)
 end)
-BankItems_ExportButton:SetScript("OnLeave", BankItems_Button_OnLeave)
-BankItems_ExportButton:SetScript("OnClick", function(self)
+_G["BankItems_ExportButton"]:SetScript("OnLeave", BankItems_Button_OnLeave)
+_G["BankItems_ExportButton"]:SetScript("OnClick", function(self)
 	BankItems_GenerateExportText()
 	BankItems_ExportFrame:Show()
 end)
 
 -- The Search Button
-BankItems_SearchButton:SetScript("OnEnter", function(self)
+_G["BankItems_SearchButton"]:SetScript("OnEnter", function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 	GameTooltip:SetText(BANKITEMS_SEARCHBUTTON_TEXT, nil, nil, nil, nil, 1)
 end)
-BankItems_SearchButton:SetScript("OnLeave", BankItems_Button_OnLeave)
-BankItems_SearchButton:SetScript("OnClick", BankItems_DisplaySearch)
+_G["BankItems_SearchButton"]:SetScript("OnLeave", BankItems_Button_OnLeave)
+_G["BankItems_SearchButton"]:SetScript("OnClick", BankItems_DisplaySearch)
 
 
 -- The BankItems frame
@@ -2627,9 +2644,11 @@ function BankItems_Hooktooltip(tooltip)
 		BankItems_AddTooltipData(self) --currency tooltip functions typically don't trigger OnTooltipSetItem so call BankItems_AddTooltipData function
 	end
 
+	--In classic era GetCurrencyListLink does not exist,
+	--but C_CurrencyInfo.GetCurrencyListLink does.
 	local e = tooltip.SetCurrencyToken
 	tooltip.SetCurrencyToken = function(self, ...)
-		self.BankItems_Link = GetCurrencyListLink(...)
+		self.BankItems_Link = C_CurrencyInfo.GetCurrencyListLink(...)
 		e(self, ...)
 		BankItems_AddTooltipData(self)
 	end
@@ -2652,25 +2671,43 @@ function BankItems_Hooktooltip(tooltip)
 	local h = tooltip.SetMerchantCostItem
 	tooltip.SetMerchantCostItem = function(self, ...)
 		local _, _, link, name = GetMerchantItemCostItem(...) --currencies currently return nil for the link
-		self.BankItems_Link = link or GetCurrencyString(name)
+
+		---@type number What is the glue to get you from GetMerchantItemCostItem to a currency string?
+		local currencyID = tonumber(name) or 0
+		self.BankItems_Link = link or GetCurrencyString(currencyID)
 		h(self, ...)
 		if not link then
 			BankItems_AddTooltipData(self)
 		end
 	end
 
+	---@class FileID: integer
+	---@class CurrencyID: integer
+
+	-- In Classic Era (11500) the function GetBackpackCurrencyInfo DOES exist.
+	-- Note: the function C_CurrencyInfo.GetBackpackCurrencyInfo does NOT exist.
 	local i = tooltip.SetBackpackToken
 	tooltip.SetBackpackToken = function(self, ...)
-		self.BankItems_Link = "currency:"..select(4, GetBackpackCurrencyInfo(...))
+		local _, _, _, currencyID = GetBackpackCurrencyInfo(...);
+		---@cast currencyID CurrencyID
+
+		self.BankItems_Link = "currency:"..tostring(currencyID)
 		i(self, ...)
 		BankItems_AddTooltipData(self)
 	end
 
-	local j = tooltip.SetRecipeReagentItem --tooltip.SetTradeSkillItem removed in 7.0 and replaced with this
-	tooltip.SetRecipeReagentItem = function(self, ...)
-		self.BankItems_Link = GetRecipeReagentItemLink(...)
-		j(self, ...)
-	end
+	--In Classic Era the two functions are *not* declared:
+	-- - GetRecipeReagentItemLink() 
+	-- - C_TradeSkillUI.GetRecipeReagentItemLink()
+	-- Whatever this feature was trying to do, it does not exist in Classic Era
+	--[[
+	if _G["GetRecipeReagentItemLink"] then
+		local j = tooltip.SetRecipeReagentItem --tooltip.SetTradeSkillItem removed in 7.0 and replaced with this
+		tooltip.SetRecipeReagentItem = function(self, ...)
+			self.BankItems_Link = GetRecipeReagentItemLink(...)
+			j(self, ...)
+		end
+	end--]]
 
 	local k = tooltip.SetQuestLogItem --is this still needed in 7.0?
 	tooltip.SetQuestLogItem = function(self, ...)
@@ -2685,16 +2722,29 @@ function BankItems_Hooktooltip(tooltip)
 	end
 
 	local m = tooltip.SetQuestLogCurrency
+
+	---@param self any
 	tooltip.SetQuestLogCurrency = function(self, ...)
 		local _, index = ...
-		self.BankItems_Link = GetCurrencyString(GetQuestLogRewardCurrencyInfo(index))
+
+		local _, _, _, currencyID = GetQuestLogRewardCurrencyInfo(index)
+		self.BankItems_Link = GetCurrencyString(currencyID)
 		m(self, ...)
 		BankItems_AddTooltipData(self)
 	end
 
 	local n = tooltip.SetQuestCurrency
+
+	---@param self any
 	tooltip.SetQuestCurrency = function(self, ...)
-		self.BankItems_Link = GetCurrencyString(GetQuestCurrencyInfo(...))
+		local itemType, index = ...
+
+		---@cast itemType string
+		---@cast index number
+
+		--local link = GetCurrencyString(GetQuestCurrencyInfo(...))
+		local link = GetQuestCurrencyInfo(itemType, index)
+		self.BankItems_Link = link
 		n(self, ...)
 		BankItems_AddTooltipData(self)
 	end
@@ -2831,7 +2881,7 @@ function BankItems_MinimapButton_BeingDragged()
 	xpos = xmin-xpos/UIParent:GetScale()+70
 	ypos = ypos/UIParent:GetScale()-ymin-70
 
-	local v = math.deg(math.atan2(ypos, xpos))
+	local v = math.deg(math.atan2(ypos, xpos)) --12/12/2023 math.atan2 deprecated in Lua 5.3
 	if (v < 0) then
 		v = v + 360
 	end
@@ -2839,8 +2889,8 @@ function BankItems_MinimapButton_BeingDragged()
 	BankItems_MinimapButton_UpdatePosition()
 
 	if (BankItems_OptionsFrame:IsVisible()) then
-		BankItems_ButtonRadiusSlider:SetValue(BankItems_Save.ButtonRadius)
-		BankItems_ButtonPosSlider:SetValue(BankItems_Save.ButtonPosition)
+		_G["BankItems_ButtonRadiusSlider"]:SetValue(BankItems_Save.ButtonRadius)
+		_G["BankItems_ButtonPosSlider"]:SetValue(BankItems_Save.ButtonPosition)
 	end
 end
 
@@ -2925,7 +2975,7 @@ do
 	local BankItems_OptionsFrame_MinimapButton = CreateFrame("CheckButton", "BankItems_OptionsFrame_MinimapButton", BankItems_OptionsFrame, "OptionsCheckButtonTemplate")
 	BankItems_OptionsFrame_MinimapButton:SetPoint("TOPLEFT", 25, -47)
 	BankItems_OptionsFrame_MinimapButton:SetHitRectInsets(0, -210, 0, 0)
-	BankItems_OptionsFrame_MinimapButtonText:SetText(BANKITEMS_MINIMAP_BUTTON_TEXT)
+	_G[BankItems_OptionsFrame_MinimapButton:GetName() .. "Text"]:SetText(BANKITEMS_MINIMAP_BUTTON_TEXT)
 	BankItems_OptionsFrame_MinimapButton:SetScript("OnClick", function(self)
 		if (BankItems_Save.ButtonShown) then
 			BankItems_Save.ButtonShown = false
@@ -2952,7 +3002,7 @@ do
 			BankItems_Save.WindowStyle = 2
 			self:SetChecked(true)
 			BankItems_Frame:SetAttribute("UIPanelLayout-enabled", true)
-			BankItems_ScaleSlider:SetValue(100)
+			_G["BankItems_ScaleSlider"]:SetValue(100)
 			BankItems_Chat(BANKITEMS_BAGPARENT_CAUTION11_TEXT)
 			BankItems_Chat(BANKITEMS_BAGPARENT_CAUTION12_TEXT)
 		end
@@ -3120,9 +3170,9 @@ function BankItems_Options_Init(self, event)
 	elseif (BankItems_Save.WindowStyle == 2) then
 		BankItems_Frame:SetAttribute("UIPanelLayout-enabled", true)
 	end
-	UIDropDownMenu_SetWidth(BankItems_BehaviorDropDown, 220)
-	BankItems_BehaviorDropDown.initialize = BankItems_BehaviorDropDown_Initialize
-	BankItems_BehaviorDropDownText:SetText(BANKITEMS_BEHAVIOR2_TEXT)
+	UIDropDownMenu_SetWidth(_G["BankItems_BehaviorDropDown"], 220)
+	_G["BankItems_BehaviorDropDown"].initialize = BankItems_BehaviorDropDown_Initialize
+	_G["BankItems_BehaviorDropDownText"]:SetText(BANKITEMS_BEHAVIOR2_TEXT)
 
 	BankItems_HookTooltips()
 
@@ -3148,14 +3198,14 @@ function BankItems_BehaviorDropDown_OnClick(button, selected)
 end
 
 function BankItems_Options_OnShow()
-	BankItems_OptionsFrame_LockWindow:SetChecked(BankItems_Save.LockWindow)
-	BankItems_OptionsFrame_MinimapButton:SetChecked(BankItems_Save.ButtonShown)
-	BankItems_OptionsFrame_WindowStyle:SetChecked(BankItems_Save.WindowStyle == 2)
-	BankItems_OptionsFrame_BagParent:SetChecked(BankItems_Save.BagParent == 2)
-	BankItems_ButtonRadiusSlider:SetValue(BankItems_Save.ButtonRadius)
-	BankItems_ButtonPosSlider:SetValue(BankItems_Save.ButtonPosition)
-	BankItems_TransparencySlider:SetValue(BankItems_Save.Transparency)
-	BankItems_ScaleSlider:SetValue(BankItems_Save.Scale)
+	_G["BankItems_OptionsFrame_LockWindow"]:SetChecked(BankItems_Save.LockWindow)
+	_G["BankItems_OptionsFrame_MinimapButton"]:SetChecked(BankItems_Save.ButtonShown)
+	_G["BankItems_OptionsFrame_WindowStyle"]:SetChecked(BankItems_Save.WindowStyle == 2)
+	_G["BankItems_OptionsFrame_BagParent"]:SetChecked(BankItems_Save.BagParent == 2)
+	_G["BankItems_ButtonRadiusSlider"]:SetValue(BankItems_Save.ButtonRadius)
+	_G["BankItems_ButtonPosSlider"]:SetValue(BankItems_Save.ButtonPosition)
+	_G["BankItems_TransparencySlider"]:SetValue(BankItems_Save.Transparency)
+	_G["BankItems_ScaleSlider"]:SetValue(BankItems_Save.Scale)
 end
 
 BankItems_OptionsFrame:RegisterEvent("VARIABLES_LOADED")
@@ -3226,7 +3276,7 @@ do
 		self:SetChecked(BankItems_Save.ExportPrefix)
 		BankItems_ExportFrame_GroupData:SetChecked(false)
 		BankItems_Save.GroupExportData = false
-		G["BankItems_ExportFrame_ResetButton"]:Click()
+		_G["BankItems_ExportFrame_ResetButton"]:Click()
 	end)
 
 	-- Search editbox
@@ -3257,7 +3307,7 @@ do
 			BankItems_Save.SearchAllRealms = true
 		end
 		self:SetChecked(BankItems_Save.SearchAllRealms)
-		BankItems_ExportFrame_ResetButton:Click()
+		_G["BankItems_ExportFrame_ResetButton"]:Click()
 	end)
 
 	-- Reset/Search button
