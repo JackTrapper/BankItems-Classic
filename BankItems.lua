@@ -1,4 +1,5 @@
-﻿--[[	*****************************************************************
+﻿--[[
+	*****************************************************************
 	BankItems v2.56
 	2021-January-10
 
@@ -196,6 +197,8 @@ Xinhuan's Note:
 
 --]]
 
+local addonName, addon = ...
+
 BankItems_Save			= {}		-- table, SavedVariable, can't be local
 
 ---@class Player
@@ -271,8 +274,7 @@ local GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink = GetInboxHeaderInfo, G
 -- https://warcraft.wiki.gg/wiki/Patch_9.0.1/API_changes
 -- TODO: Figure out how to change WoWAPI to classic mode
 
--- @global_constant: KEYRING_CONTAINER
--- MY_CONSTANT exists at runtime within the specific environment
+--Global constants that exist in classic at runtime; declare them here so that the type system knows about them.
 local KEYRING_CONTAINER				= KEYRING_CONTAINER or -2
 local NUM_CONTAINER_COLUMNS		= NUM_CONTAINER_COLUMNS or 4
 local MAX_BG_TEXTURES				= MAX_BG_TEXTURES or 2
@@ -3120,7 +3122,10 @@ do
 	-- Done button
 	local BankItems_OptionsFrameDone = CreateFrame("Button", "BankItems_OptionsFrameDone", BankItems_OptionsFrame, "OptionsButtonTemplate")
 	BankItems_OptionsFrameDone:SetPoint("BOTTOM", 0, 20)
-	BankItems_OptionsFrameDone:SetText(DONE)
+
+	--12/16/2023: Calling SetText does set the text to "Done", but it's tiny, and doesn't hide the HUGE Okay text also there.
+	--And what's wrong with the default UI provided by WoW anyway? Do they not localize it?
+	--BankItems_OptionsFrameDone:SetText(DONE)
 	BankItems_OptionsFrameDone:SetScript("OnClick", function(self)
 		self:GetParent():Hide()
 	end)
